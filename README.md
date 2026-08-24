@@ -90,7 +90,7 @@ Parameters:
 - `calendarUrl`: string
 
 Returns:
-- A list of occurrences that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, `recurring`, `occurrence`, and optionally `description` and `location`. A recurring series contributes one entry per occurrence, so several entries share a `uid`. Careful when acting on one of them: `uid` addresses the whole series, and update-event and delete-event take nothing finer, so they change or remove every instance. `occurrence` names the single slot for display and cannot be passed back to target it.
+- A list of occurrences that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, `recurring`, `occurrence`, and optionally `description` and `location`. A whole-day occurrence carries `wholeDay: true`, and its `start` and `end` are plain calendar dates (`YYYY-MM-DD`); `end` names the last day it covers, not the exclusive DTEND, so it is the day create-event and update-event take as their own `end`. Those two require a full ISO 8601 datetime, so add a time and an offset before passing such a date back. Every other occurrence gives `start` and `end` as ISO 8601 instants. A recurring series contributes one entry per occurrence, so several entries share a `uid`. Careful when acting on one of them: `uid` addresses the whole series, and update-event and delete-event take nothing finer, so they change or remove every instance. `occurrence` names the single slot for display and cannot be passed back to target it.
 
 ### create-event
 

@@ -19,6 +19,12 @@ function unwrapText(result: unknown): string {
 	return first.text;
 }
 
+function addDays(date: string, days: number): string {
+	const d = new Date(`${date}T00:00:00.000Z`);
+	d.setUTCDate(d.getUTCDate() + days);
+	return d.toISOString().slice(0, 10);
+}
+
 function log(step: string, detail?: unknown) {
 	const suffix =
 		detail === undefined
@@ -183,58 +189,64 @@ async function main() {
 	);
 	log("deleted recurring event");
 
-	// Whole-day event round trip with a non-UTC offset input. Regression test
-	// for a bug where `new Date(iso)` + downstream UTC-truncation shifted the
-	// stored calendar date back by one day for any offset east of UTC — see
-	// toWholeDayDate() in src/tools/whole-day-date.ts and its unit tests for
-	// the conversion logic; here we verify the fix holds through ts-caldav's
-	// real serialization and a real CalDAV server's storage/parsing.
-	const wholeDayDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-	const wholeDayDateStr = wholeDayDate.toISOString().slice(0, 10);
-	const wholeDayIso = `${wholeDayDateStr}T00:00:00+09:00`;
-	const wholeDaySummary = `caldav-mcp smoke whole-day ${wholeDayDateStr}`;
+	// Whole-day round trip over more than one day, with a non-UTC offset input.
+	// Two faults meet here. toWholeDayDate() in src/tools/whole-day-date.ts
+	// exists because `new Date(iso)` plus downstream UTC truncation shifted the
+	// stored date back a day for any offset east of UTC. list-events then
+	// reported the local midnight instant ical.js builds from a VALUE=DATE,
+	// which reads as the previous day in those same zones and made a correctly
+	// stored event look shifted. The dates must go in and come back as plain
+	// dates, with `end` naming the last day.
+	const wholeDayStart = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+		.toISOString()
+		.slice(0, 10);
+	const wholeDayEnd = addDays(wholeDayStart, 2);
 	const wholeDayUid = unwrapText(
 		await client.callTool({
 			name: "create-event",
 			arguments: {
-				summary: wholeDaySummary,
-				start: wholeDayIso,
-				end: wholeDayIso,
+				summary: `caldav-mcp smoke whole-day ${wholeDayStart}`,
+				start: `${wholeDayStart}T00:00:00+09:00`,
+				end: `${wholeDayEnd}T00:00:00+09:00`,
 				wholeDay: true,
 				calendarUrl,
 			},
 		}),
 	);
-	log("created whole-day event", { uid: wholeDayUid, input: wholeDayIso });
+	log("created whole-day event", {
+		uid: wholeDayUid,
+		start: wholeDayStart,
+		end: wholeDayEnd,
+	});
 
-	const wholeDayWindowStart = new Date(
-		wholeDayDate.getTime() - 24 * 60 * 60 * 1000,
-	);
-	const wholeDayWindowEnd = new Date(
-		wholeDayDate.getTime() + 2 * 24 * 60 * 60 * 1000,
-	);
 	const wholeDayListed = JSON.parse(
 		unwrapText(
 			await client.callTool({
 				name: "list-events",
 				arguments: {
-					start: wholeDayWindowStart.toISOString(),
-					end: wholeDayWindowEnd.toISOString(),
+					start: `${addDays(wholeDayStart, -1)}T00:00:00Z`,
+					end: `${addDays(wholeDayEnd, 2)}T00:00:00Z`,
 					calendarUrl,
 				},
 			}),
 		),
-	) as Array<{ uid: string; start: string }>;
+	) as Array<{ uid: string; start: string; end: string; wholeDay?: boolean }>;
 	const foundWholeDay = wholeDayListed.find((e) => e.uid === wholeDayUid);
 	if (!foundWholeDay)
 		throw new Error(`Created whole-day event ${wholeDayUid} not found`);
-	const storedDateStr = foundWholeDay.start.slice(0, 10);
-	if (storedDateStr !== wholeDayDateStr) {
+	if (
+		foundWholeDay.wholeDay !== true ||
+		foundWholeDay.start !== wholeDayStart ||
+		foundWholeDay.end !== wholeDayEnd
+	) {
 		throw new Error(
-			`Whole-day event date shifted: expected ${wholeDayDateStr}, got ${storedDateStr} (input ${wholeDayIso})`,
+			`Whole-day round trip wrong: expected ${wholeDayStart}..${wholeDayEnd} with wholeDay, got ${JSON.stringify(foundWholeDay)}`,
 		);
 	}
-	log("verified whole-day event date", storedDateStr);
+	log("verified whole-day event dates", {
+		start: foundWholeDay.start,
+		end: foundWholeDay.end,
+	});
 
 	unwrapText(
 		await client.callTool({
