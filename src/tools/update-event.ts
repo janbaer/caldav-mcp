@@ -2,6 +2,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient, Event, RecurrenceRule } from "ts-caldav";
 import { z } from "zod";
 import { hrefFor } from "./caldav-href.js";
+import {
+	reminderBeforeSchema,
+	toAlarm,
+	toTransp,
+	transparentSchema,
+} from "./event-extras.js";
 import { toWholeDayDate } from "./whole-day-date.js";
 
 /**
@@ -65,6 +71,8 @@ type UpdateEventInput = {
 	description?: string | undefined;
 	location?: string | undefined;
 	recurrenceRule?: RecurrenceRuleInput | undefined;
+	reminderBefore?: string | undefined;
+	transparent?: boolean | undefined;
 };
 
 function toRecurrenceRule(
@@ -115,6 +123,8 @@ export const updateEventDefinition = {
 		description: z.string().optional(),
 		location: z.string().optional(),
 		recurrenceRule: recurrenceRuleSchema.optional(),
+		reminderBefore: reminderBeforeSchema.optional(),
+		transparent: transparentSchema.optional(),
 	},
 	returns: "The unique ID of the updated event",
 } as const;
@@ -137,6 +147,8 @@ export function registerUpdateEvent(client: CalDAVClient, server: McpServer) {
 				description,
 				location,
 				recurrenceRule,
+				reminderBefore,
+				transparent,
 			} = args;
 
 			const href = hrefFor(calendarUrl, uid);
@@ -164,6 +176,15 @@ export function registerUpdateEvent(client: CalDAVClient, server: McpServer) {
 				...(location !== undefined && { location }),
 				...(recurrenceRule !== undefined && {
 					recurrenceRule: toRecurrenceRule(recurrenceRule, effectiveWholeDay),
+				}),
+				...(reminderBefore !== undefined && {
+					alarms: [toAlarm(reminderBefore)],
+				}),
+				...(transparent !== undefined && {
+					customFields: {
+						...existing.customFields,
+						transp: toTransp(transparent),
+					},
 				}),
 			});
 
