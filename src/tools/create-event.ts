@@ -2,6 +2,11 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
+import {
+	assertOrganizerForAttendees,
+	emailAddressSchema,
+	toCalAddress,
+} from "./calendar-address.js";
 import type { RecurrenceRuleInput } from "./recurrence-rule.js";
 import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
 import { toWholeDayDate } from "./whole-day-date.js";
@@ -30,8 +35,7 @@ export const createEventDefinition = {
 			.datetime({ offset: true })
 			.describe("End datetime (ISO 8601)"),
 		location: z.string().optional(),
-		organizer: z
-			.string()
+		organizer: emailAddressSchema
 			.optional()
 			.describe(
 				"Organizer email (no mailto:), written as ORGANIZER; a scheduling-capable server (e.g. Radicale with the email/iMIP hook) uses it to send invitations, updates and cancellations to the attendees."
@@ -42,10 +46,10 @@ export const createEventDefinition = {
 			.datetime({ offset: true })
 			.describe("Start datetime (ISO 8601)"),
 		attendees: z
-			.array(z.string())
+			.array(emailAddressSchema)
 			.optional()
 			.describe(
-				"Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Use with organizer."
+				"Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Requires organizer."
 			),
 		summary: z.string(),
 		wholeDay: z.boolean().optional().describe("Create as a whole-day event"),
@@ -74,15 +78,15 @@ export function registerCreateEvent(client: CalDAVClient, server: McpServer) {
 				attendees,
 			} = args;
 			const calendarUrl = toCalendarPath(args.calendarUrl, client.baseUrl);
-			// organizer/attendees are written through the ts-caldav customFields
-			// escape hatch (unknown props round-trip as raw ICS lines). The typed
-			// cast keeps this compiling across ts-caldav versions.
+			assertOrganizerForAttendees(organizer, attendees ?? []);
+			// organizer/attendees go through ts-caldav's customFields, which it
+			// writes as plain ICS properties.
 			const customFields: Record<string, string | string[]> = {};
 			if (organizer) {
-				customFields.organizer = `mailto:${organizer}`;
+				customFields.organizer = toCalAddress(organizer);
 			}
 			if (attendees?.length) {
-				customFields.attendee = attendees.map((a) => `mailto:${a}`);
+				customFields.attendee = attendees.map(toCalAddress);
 			}
 			const event = await client.createEvent(calendarUrl, {
 				end: wholeDay ? toWholeDayDate(end) : new Date(end),
@@ -94,9 +98,7 @@ export function registerCreateEvent(client: CalDAVClient, server: McpServer) {
 				...(recurrenceRule !== undefined && {
 					recurrenceRule: toRecurrenceRule(recurrenceRule, wholeDay),
 				}),
-				...(Object.keys(customFields).length > 0 && {
-					customFields: customFields as unknown as never,
-				}),
+				...(Object.keys(customFields).length > 0 && { customFields }),
 			});
 
 			return {

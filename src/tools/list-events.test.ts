@@ -173,4 +173,59 @@ describe("registerListEvents", () => {
 		expect(events[0]).toHaveProperty("start", "2026-08-20T09:00:00.000Z");
 		expect(events[0]).toHaveProperty("end", "2026-08-22T09:00:00.000Z");
 	});
+
+	it("returns organizer and attendees without mailto:", async () => {
+		const mockClient = {
+			getEvents: vi.fn().mockResolvedValue([
+				{
+					customFields: {
+						attendee: ["mailto:a@example.com", "mailto:b@example.com"],
+						organizer: "mailto:o@example.com",
+					},
+					end: new Date("2025-10-13T11:00:00Z"),
+					start: new Date("2025-10-13T10:00:00Z"),
+					summary: "Meeting",
+					uid: "event-scheduled",
+				},
+				{
+					end: new Date("2025-10-14T15:00:00Z"),
+					start: new Date("2025-10-14T14:00:00Z"),
+					summary: "Solo",
+					uid: "event-solo",
+				},
+			]),
+		};
+
+		let toolHandler: ToolHandler | null = null;
+		const server = new McpServer({ name: "test-server", version: "0.1.0" });
+		const originalRegisterTool = server.registerTool.bind(server);
+		server.registerTool = vi.fn(
+			(name: string, config: unknown, handler: ToolHandler) => {
+				if (name === "list-events") {
+					toolHandler = handler;
+				}
+				return originalRegisterTool(name, config, handler);
+			}
+		) as typeof server.registerTool;
+
+		registerListEvents(mockClient as unknown as CalDAVClient, server);
+		if (!toolHandler) {
+			throw new Error("handler not registered");
+		}
+
+		const result = await (toolHandler as ToolHandler)({
+			calendarUrl: "/test/calendar/",
+			end: "2025-10-31T23:59:59Z",
+			start: "2025-10-01T00:00:00Z",
+		});
+
+		const events = JSON.parse(result.content[0].text);
+		expect(events[0]).toHaveProperty("organizer", "o@example.com");
+		expect(events[0]).toHaveProperty("attendees", [
+			"a@example.com",
+			"b@example.com",
+		]);
+		expect(events[1]).not.toHaveProperty("organizer");
+		expect(events[1]).not.toHaveProperty("attendees");
+	});
 });

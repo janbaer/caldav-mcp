@@ -159,7 +159,7 @@ Parameters:
 
 Returns:
 
-- A list of events that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, and optionally `description` and `location`
+- A list of events that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, and optionally `description`, `location`, `organizer` (email) and `attendees` (emails)
 
 ### create-event
 
@@ -181,7 +181,7 @@ Parameters:
   - `interval`: number (optional)
   - `until`: string (optional)
 - `start`: string — Start datetime (ISO 8601)
-- `attendees`: array of string (optional) — Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Use with organizer.
+- `attendees`: array of string (optional) — Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Requires organizer.
 - `summary`: string
 - `wholeDay`: boolean (optional) — Create as a whole-day event
 
@@ -191,7 +191,7 @@ Returns:
 
 ### update-event
 
-Updates an existing event in the calendar specified by its URL. Only provided fields are changed. For a one-day full-day event, set `wholeDay` to true and set `start` and `end` to the same calendar day.
+Updates an existing event in the calendar specified by its URL. Only provided fields are changed. For a one-day full-day event, set `wholeDay` to true and set `start` and `end` to the same calendar day. Any update of an event with attendees rewrites them as bare addresses, dropping their names and replies (accepted/declined).
 
 Parameters:
 
@@ -199,7 +199,7 @@ Parameters:
 - `description`: string (optional)
 - `end`: string (optional)
 - `location`: string (optional)
-- `organizer`: string (optional) — Organizer email (no mailto:); pass to set or change ORGANIZER. Omit to leave it as stored.
+- `organizer`: string (optional) — Organizer email (no mailto:); pass to set or change ORGANIZER, or an empty string to remove it (only when the event has no attendees). Omit to leave it as stored.
 - `recurrenceRule`: object (optional)
   - `byday`: array of string (optional)
   - `bymonth`: array of number (optional)
@@ -209,7 +209,7 @@ Parameters:
   - `interval`: number (optional)
   - `until`: string (optional)
 - `start`: string (optional)
-- `attendees`: array of string (optional) — Full desired attendee list (no mailto:); pass to set/replace ATTENDEE lines. Omit to leave stored attendees untouched.
+- `attendees`: array of string (optional) — The complete new attendee list (no mailto:): it replaces the stored one, so get the current attendees from list-events and include everyone who should stay. An empty list removes all attendees. Omit to leave them as stored. Requires an organizer.
 - `summary`: string (optional)
 - `uid`: string — Unique identifier of the event to update (obtained from list-events)
 - `wholeDay`: boolean (optional) — Update whether this is a whole-day event

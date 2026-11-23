@@ -12,6 +12,8 @@ type ToolHandler = (params: {
 	wholeDay?: boolean;
 	description?: string;
 	location?: string;
+	organizer?: string;
+	attendees?: string[];
 	recurrenceRule?: {
 		freq?: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
 		interval?: number;
@@ -461,5 +463,110 @@ describe("registerUpdateEvent whole-day handling", () => {
 			"/f/test-calendar/",
 			expect.objectContaining({ end: timed.end, start: timed.start })
 		);
+	});
+});
+
+describe("registerUpdateEvent organizer and attendees", () => {
+	const scheduled: Event = {
+		...existingEvent,
+		customFields: {
+			attendee: ["mailto:a@example.com", "mailto:b@example.com"],
+			organizer: "mailto:o@example.com",
+			"x-custom": "keep me",
+		},
+	};
+
+	async function update(
+		stored: Event,
+		changes: { organizer?: string; attendees?: string[]; summary?: string }
+	) {
+		const mockClient = {
+			getEventsByHref: vi.fn().mockResolvedValue([stored]),
+			updateEvent: vi.fn().mockResolvedValue({
+				etag: '"new-etag"',
+				href: stored.href,
+				newCtag: "",
+				uid: stored.uid,
+			}),
+		};
+		const { server, getHandler } = makeServer();
+		registerUpdateEvent(mockClient as unknown as CalDAVClient, server);
+		const handler = getHandler();
+		if (!handler) {
+			throw new Error("handler not registered");
+		}
+		await handler({
+			calendarUrl: "/f/test-calendar/",
+			uid: stored.uid,
+			...changes,
+		});
+		return mockClient.updateEvent.mock.calls[0]?.[1] as Event;
+	}
+
+	it("keeps the stored custom fields when neither is passed", async () => {
+		const payload = await update(scheduled, { summary: "Renamed" });
+		expect(payload.customFields).toEqual(scheduled.customFields);
+	});
+
+	it("changes only the organizer and keeps the attendees", async () => {
+		const payload = await update(scheduled, { organizer: "new@example.com" });
+		expect(payload.customFields).toEqual({
+			attendee: ["mailto:a@example.com", "mailto:b@example.com"],
+			organizer: "mailto:new@example.com",
+			"x-custom": "keep me",
+		});
+	});
+
+	it("replaces the attendee list and keeps the organizer", async () => {
+		const payload = await update(scheduled, {
+			attendees: ["a@example.com", "c@example.com"],
+		});
+		expect(payload.customFields).toEqual({
+			attendee: ["mailto:a@example.com", "mailto:c@example.com"],
+			organizer: "mailto:o@example.com",
+			"x-custom": "keep me",
+		});
+	});
+
+	it("keeps a single stored attendee (a plain string) when only the organizer changes", async () => {
+		const payload = await update(
+			{
+				...existingEvent,
+				customFields: {
+					attendee: "mailto:a@example.com",
+					organizer: "mailto:o@example.com",
+				},
+			},
+			{ organizer: "new@example.com" }
+		);
+		expect(payload.customFields).toEqual({
+			attendee: ["mailto:a@example.com"],
+			organizer: "mailto:new@example.com",
+		});
+	});
+
+	it("removes all attendees with an empty list", async () => {
+		const payload = await update(scheduled, { attendees: [] });
+		expect(payload.customFields).toEqual({
+			organizer: "mailto:o@example.com",
+			"x-custom": "keep me",
+		});
+	});
+
+	it("removes organizer and attendees together", async () => {
+		const payload = await update(scheduled, { attendees: [], organizer: "" });
+		expect(payload.customFields).toEqual({ "x-custom": "keep me" });
+	});
+
+	it("refuses to remove the organizer while attendees remain", async () => {
+		await expect(update(scheduled, { organizer: "" })).rejects.toThrow(
+			"attendees need an organizer"
+		);
+	});
+
+	it("refuses to add attendees to an event without an organizer", async () => {
+		await expect(
+			update(existingEvent, { attendees: ["a@example.com"] })
+		).rejects.toThrow("attendees need an organizer");
 	});
 });

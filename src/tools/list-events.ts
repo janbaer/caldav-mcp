@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
+import { readScheduling } from "./calendar-address.js";
 
 interface ListEventsInput {
 	calendarUrl: string;
@@ -29,7 +30,7 @@ export const listEventsDefinition = {
 	},
 	name: "list-events",
 	returns:
-		"A list of events that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, and optionally `description` and `location`",
+		"A list of events that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, and optionally `description`, `location`, `organizer` (email) and `attendees` (emails)",
 } as const;
 
 export function registerListEvents(client: CalDAVClient, server: McpServer) {
@@ -47,14 +48,19 @@ export function registerListEvents(client: CalDAVClient, server: McpServer) {
 				start: new Date(start),
 			};
 			const allEvents = await client.getEvents(calendarUrl, options);
-			const data = allEvents.map((e) => ({
-				end: e.end,
-				start: e.start,
-				summary: e.summary,
-				uid: e.uid,
-				...(e.description && { description: e.description }),
-				...(e.location && { location: e.location }),
-			}));
+			const data = allEvents.map((e) => {
+				const { organizer, attendees } = readScheduling(e.customFields);
+				return {
+					end: e.end,
+					start: e.start,
+					summary: e.summary,
+					uid: e.uid,
+					...(e.description && { description: e.description }),
+					...(e.location && { location: e.location }),
+					...(organizer && { organizer }),
+					...(attendees.length > 0 && { attendees }),
+				};
+			});
 			return {
 				content: [{ text: JSON.stringify(data), type: "text" }],
 			};
