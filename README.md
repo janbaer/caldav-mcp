@@ -164,6 +164,7 @@ Parameters:
 - `description`: string (optional)
 - `end`: string — End datetime (ISO 8601)
 - `location`: string (optional)
+- `organizer`: string (optional) — Organizer email (no mailto:), written as ORGANIZER; a scheduling-capable server (e.g. Radicale with the email/iMIP hook) uses it to send invitations, updates and cancellations to the attendees.
 - `recurrenceRule`: object (optional)
   - `byday`: array of string (optional)
   - `bymonth`: array of number (optional)
@@ -173,6 +174,7 @@ Parameters:
   - `interval`: number (optional)
   - `until`: string (optional)
 - `start`: string — Start datetime (ISO 8601)
+- `attendees`: array of string (optional) — Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Use with organizer.
 - `summary`: string
 - `wholeDay`: boolean (optional) — Create as a whole-day event
 
@@ -188,6 +190,7 @@ Parameters:
 - `description`: string (optional)
 - `end`: string (optional)
 - `location`: string (optional)
+- `organizer`: string (optional) — Organizer email (no mailto:); pass to set or change ORGANIZER. Omit to leave it as stored.
 - `recurrenceRule`: object (optional)
   - `byday`: array of string (optional)
   - `bymonth`: array of number (optional)
@@ -197,6 +200,7 @@ Parameters:
   - `interval`: number (optional)
   - `until`: string (optional)
 - `start`: string (optional)
+- `attendees`: array of string (optional) — Full desired attendee list (no mailto:); pass to set/replace ATTENDEE lines. Omit to leave stored attendees untouched.
 - `summary`: string (optional)
 - `uid`: string — Unique identifier of the event to update (obtained from list-events)
 - `wholeDay`: boolean (optional) — Update whether this is a whole-day event

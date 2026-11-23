@@ -10,10 +10,12 @@ import {
 import { carryOverWholeDayDates, toWholeDayDate } from "./whole-day-date.js";
 
 interface UpdateEventInput {
+	attendees?: string[] | undefined;
 	calendarUrl: string;
 	description?: string | undefined;
 	end?: string | undefined;
 	location?: string | undefined;
+	organizer?: string | undefined;
 	recurrenceRule?: RecurrenceRuleInput | undefined;
 	start?: string | undefined;
 	summary?: string | undefined;
@@ -29,8 +31,20 @@ export const updateEventDefinition = {
 		description: z.string().optional(),
 		end: z.string().datetime({ offset: true }).optional(),
 		location: z.string().optional(),
+		organizer: z
+			.string()
+			.optional()
+			.describe(
+				"Organizer email (no mailto:); pass to set or change ORGANIZER. Omit to leave it as stored."
+			),
 		recurrenceRule: recurrenceRuleSchema.optional(),
 		start: z.string().datetime({ offset: true }).optional(),
+		attendees: z
+			.array(z.string())
+			.optional()
+			.describe(
+				"Full desired attendee list (no mailto:); pass to set/replace ATTENDEE lines. Omit to leave stored attendees untouched."
+			),
 		summary: z.string().optional(),
 		uid: z
 			.string()
@@ -45,6 +59,43 @@ export const updateEventDefinition = {
 	name: "update-event",
 	returns: "The unique ID of the updated event",
 } as const;
+
+// Partial: a key that isn't stored reads as undefined.
+type CustomFields = Partial<Record<string, string | string[]>>;
+
+// Merge organizer/attendees into the event's stored customFields
+// (ts-caldav round-trips unknown props there); never wipe other fields.
+// An empty organizer or attendee list removes the stored value.
+function mergeSchedulingFields(
+	existing: object,
+	organizer: string | undefined,
+	attendees: string[] | undefined
+): CustomFields {
+	const {
+		organizer: storedOrganizer,
+		attendee: storedAttendees,
+		...rest
+	} = (existing as { customFields?: CustomFields }).customFields ?? {};
+	const next: CustomFields = { ...rest };
+
+	const nextOrganizer =
+		organizer === undefined
+			? storedOrganizer
+			: organizer && `mailto:${organizer}`;
+	if (nextOrganizer) {
+		next.organizer = nextOrganizer;
+	}
+
+	const nextAttendees =
+		attendees === undefined
+			? storedAttendees
+			: attendees.map((a) => `mailto:${a}`);
+	if (nextAttendees?.length) {
+		next.attendee = nextAttendees;
+	}
+
+	return next;
+}
 
 export function registerUpdateEvent(client: CalDAVClient, server: McpServer) {
 	server.registerTool(
@@ -63,6 +114,8 @@ export function registerUpdateEvent(client: CalDAVClient, server: McpServer) {
 				description,
 				location,
 				recurrenceRule,
+				organizer,
+				attendees,
 			} = args;
 			const calendarUrl = toCalendarPath(args.calendarUrl, client.baseUrl);
 
@@ -92,6 +145,13 @@ export function registerUpdateEvent(client: CalDAVClient, server: McpServer) {
 				...(location !== undefined && { location }),
 				...(recurrenceRule !== undefined && {
 					recurrenceRule: toRecurrenceRule(recurrenceRule, effectiveWholeDay),
+				}),
+				...((organizer !== undefined || attendees !== undefined) && {
+					customFields: mergeSchedulingFields(
+						existing,
+						organizer,
+						attendees
+					) as unknown as never,
 				}),
 			});
 
