@@ -1,3 +1,9 @@
+## [0.12.1](https://github.com/langmail/caldav-mcp/compare/v0.12.0...v0.12.1) (2026-11-23)
+
+### Bug Fixes
+
+* **tools:** validate organizer and attendees, and show them in list-events ([#182](https://github.com/langmail/caldav-mcp/issues/182)) ([088fb66](https://github.com/langmail/caldav-mcp/commit/088fb66b4d8f9c4bef1ae18793cf0fec2debec8f))
+
 # [0.12.0](https://github.com/langmail/caldav-mcp/compare/v0.11.4...v0.12.0) (2026-11-23)
 
 ### Features
