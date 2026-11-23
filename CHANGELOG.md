@@ -1,3 +1,9 @@
+# [0.12.0](https://github.com/langmail/caldav-mcp/compare/v0.11.4...v0.12.0) (2026-11-23)
+
+### Features
+
+* add organizer and attendees to create-event and update-event ([#176](https://github.com/langmail/caldav-mcp/issues/176)) ([27c63ae](https://github.com/langmail/caldav-mcp/commit/27c63aee524012b970586ad1b571a1735ebeaa14))
+
 ## [0.11.4](https://github.com/langmail/caldav-mcp/compare/v0.11.3...v0.11.4) (2026-11-23)
 
 ### Bug Fixes
