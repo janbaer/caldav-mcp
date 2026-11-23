@@ -171,7 +171,8 @@ jobs:
           ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
       - uses: actions/setup-node@v5
         with:
-          node-version: "24"
+          # semantic-release 26 requires Node >=26.13; the other jobs stay on 24
+          node-version: "26"
       - run: npm ci
       - run: npm run build
       - name: Release
