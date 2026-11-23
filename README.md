@@ -120,17 +120,20 @@ The server supports two transports, selected at startup:
 
 ## Docker
 
-A `Dockerfile` is provided for running the server with the Streamable HTTP transport — useful when hosting the MCP server as a long-running container that remote MCP clients connect to over HTTP, rather than spawning the binary locally via stdio.
+A container image is available for running the server with the Streamable HTTP transport — useful when hosting the MCP server as a long-running container that remote MCP clients connect to over HTTP, rather than spawning the binary locally via stdio.
+
+Each release publishes a multi-arch image (`linux/amd64`, `linux/arm64`) to the GitHub Container Registry, tagged with its full, minor and major version (for example `1.2.3`, `1.2`, `1`) and `latest`:
 
 ```bash
-docker build -t caldav-mcp .
 docker run --rm -p 3000:3000 \
   -e CALDAV_BASE_URL=https://your-caldav-server.com/dav \
   -e CALDAV_USERNAME=your-username \
   -e CALDAV_PASSWORD=your-password \
   -e MCP_AUTH_TOKEN=your-shared-secret \
-  caldav-mcp
+  ghcr.io/langmail/caldav-mcp
 ```
+
+To build the image yourself instead, run `docker build -t caldav-mcp .` and use `caldav-mcp` as the image name.
 
 The image binds to `0.0.0.0:3000` (or the port in `MCP_PORT`/`PORT`), serves `POST /mcp`, and reports its health from `GET /health`. Because it listens on all interfaces, `MCP_AUTH_TOKEN` is required: without it the container exits at startup (see [Transports](#transports)). The container is not needed for the default stdio setup in [Setup](#setup) above.
 

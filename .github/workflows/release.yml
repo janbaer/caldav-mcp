@@ -163,6 +163,13 @@ jobs:
     needs: [test, knip, smoke]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    # Job-level permissions replace the workflow's, so repeat them here
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+      packages: write # Push the container image to ghcr.io
     steps:
       - uses: actions/checkout@v5
         with:
@@ -211,3 +218,38 @@ jobs:
           curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
           ./mcp-publisher login github-oidc
           ./mcp-publisher publish
+      # Same reason as above: a release created with GITHUB_TOKEN starts no
+      # other workflow, and the release commit carries [skip ci].
+      - name: Set up QEMU
+        if: steps.release.outputs.version != ''
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        if: steps.release.outputs.version != ''
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to ghcr.io
+        if: steps.release.outputs.version != ''
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Container image metadata
+        if: steps.release.outputs.version != ''
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/langmail/caldav-mcp
+          tags: |
+            type=semver,pattern={{version}},value=v${{ steps.release.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ steps.release.outputs.version }}
+            type=semver,pattern={{major}},value=v${{ steps.release.outputs.version }}
+            type=raw,value=latest
+      - name: Build and push container image
+        if: steps.release.outputs.version != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
