@@ -4,8 +4,8 @@ import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CalDAVClient } from "ts-caldav";
-
-import { type HttpConfig, parseHttpConfig } from "./http-config.js";
+import type { HttpConfig } from "./http-config.js";
+import { parseHttpConfig } from "./http-config.js";
 import { createServer } from "./server.js";
 
 function listeningUrl(server: Server): string {

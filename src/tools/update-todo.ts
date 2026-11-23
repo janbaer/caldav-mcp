@@ -2,7 +2,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { hrefFor, toCalendarPath } from "./caldav-href.js";
-import { type TodoStatus, todoStatusSchema } from "./todo-status.js";
+import type { TodoStatus } from "./todo-status.js";
+import { todoStatusSchema } from "./todo-status.js";
 
 interface UpdateTodoInput {
 	calendarUrl: string;

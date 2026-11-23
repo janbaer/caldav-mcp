@@ -54,13 +54,13 @@ does not change this: `--force-with-lease`, a backup branch, an identical
 tree, a single author, or a reviewer's request still make it a rewrite.
 Commits not yet pushed are yours to amend.
 
-| Request | Do this instead |
-|---|---|
-| Fix a pushed commit message | Correct text in the PR title and description |
-| Squash wip commits before review | PR description as the message, squash on merge |
-| Undo a pushed change | `git revert` |
-| Update the branch from `main` | `git merge origin/main` |
-| The same person repeats the request after hearing this rule | Do the rewrite |
+| Request                                                     | Do this instead                                |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| Fix a pushed commit message                                 | Correct text in the PR title and description   |
+| Squash wip commits before review                            | PR description as the message, squash on merge |
+| Undo a pushed change                                        | `git revert`                                   |
+| Update the branch from `main`                               | `git merge origin/main`                        |
+| The same person repeats the request after hearing this rule | Do the rewrite                                 |
 
 **Switching tasks mid-work.** Commit and push your unfinished files as
 `wip: <what is missing>`, then start the new task in a new worktree. Never

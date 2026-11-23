@@ -8,8 +8,8 @@ caldav-mcp is published to npm and versioned automatically via semantic-release.
 Security fixes are applied to the latest released version. Please make sure you
 are running the most recent release before reporting an issue.
 
-| Version | Supported          |
-| ------- | ------------------ |
+| Version        | Supported          |
+| -------------- | ------------------ |
 | Latest release | :white_check_mark: |
 | Older releases | :x:                |
 

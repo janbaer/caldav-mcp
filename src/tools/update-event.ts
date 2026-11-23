@@ -2,11 +2,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { hrefFor, toCalendarPath } from "./caldav-href.js";
-import {
-	type RecurrenceRuleInput,
-	recurrenceRuleSchema,
-	toRecurrenceRule,
-} from "./recurrence-rule.js";
+import type { RecurrenceRuleInput } from "./recurrence-rule.js";
+import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
 import { carryOverWholeDayDates, toWholeDayDate } from "./whole-day-date.js";
 
 interface UpdateEventInput {

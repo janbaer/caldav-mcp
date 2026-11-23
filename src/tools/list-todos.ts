@@ -2,7 +2,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient, Todo } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
-import { type TodoStatus, todoStatusSchema } from "./todo-status.js";
+import type { TodoStatus } from "./todo-status.js";
+import { todoStatusSchema } from "./todo-status.js";
 
 // `OPEN`/`ALL` are filter keywords expressing sets no single status can (a union
 // and "no filter"); the four raw statuses allow an exact-status query. The raw

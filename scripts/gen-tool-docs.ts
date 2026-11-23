@@ -103,6 +103,7 @@ function renderTool(tool: ToolDefinition): string {
 		lines.push("Parameters: none");
 	} else {
 		lines.push("Parameters:");
+		lines.push("");
 		for (const [name, schema] of entries) {
 			lines.push(renderField(name, schema));
 		}
@@ -110,6 +111,7 @@ function renderTool(tool: ToolDefinition): string {
 	if (tool.returns) {
 		lines.push("");
 		lines.push("Returns:");
+		lines.push("");
 		lines.push(`- ${tool.returns}`);
 	}
 	return lines.join("\n");

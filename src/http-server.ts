@@ -1,13 +1,10 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import {
-	createServer as createHttpServer,
-	type IncomingMessage,
-	type Server,
-	type ServerResponse,
-} from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
+import { createServer as createHttpServer } from "node:http";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { type HttpConfig, isLoopbackHost } from "./http-config.js";
+import type { HttpConfig } from "./http-config.js";
+import { isLoopbackHost } from "./http-config.js";
 
 const MCP_PATH = "/mcp";
 const HEALTH_PATH = "/health";

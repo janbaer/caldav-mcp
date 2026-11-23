@@ -56,6 +56,7 @@ Using caldav-mcp? [Tell us how in three minutes](https://tally.so/r/GepQM2?sourc
 ### Quick Start
 
 Run the MCP server in development mode with auto-reload:
+
 ```bash
 npm run dev
 ```
@@ -81,19 +82,21 @@ node dist/index.js
 The server supports two transports, selected at startup:
 
 - **stdio** (default): JSON-RPC over stdin/stdout, suitable for the standard MCP client configuration shown in [Setup](#setup).
+
   ```bash
   npx caldav-mcp
   ```
 - **Streamable HTTP** (`--http`): runs as a long-lived server that remote MCP clients connect to at `POST /mcp`. Each request is handled statelessly, and `GET /health` answers `ok` for health checks.
+
   ```bash
   MCP_AUTH_TOKEN=your-shared-secret npx caldav-mcp --http
   ```
 
-  | Env var | Default | Description |
-  |---|---|---|
-  | `MCP_HOST` | `127.0.0.1` | Bind address. Set to `0.0.0.0` to listen on all interfaces. |
-  | `MCP_PORT` | `PORT`, else `3000` | TCP port to bind. Falls back to `PORT`, which platforms like Cloud Run set. |
-  | `MCP_AUTH_TOKEN` | _(unset)_ | When set, requests must send `Authorization: Bearer <MCP_AUTH_TOKEN>`; others get `401`. Required when `MCP_HOST` is not a loopback address. |
+  | Env var          | Default             | Description                                                                                                                                  |
+  | ---------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `MCP_HOST`       | `127.0.0.1`         | Bind address. Set to `0.0.0.0` to listen on all interfaces.                                                                                  |
+  | `MCP_PORT`       | `PORT`, else `3000` | TCP port to bind. Falls back to `PORT`, which platforms like Cloud Run set.                                                                  |
+  | `MCP_AUTH_TOKEN` | _(unset)_           | When set, requests must send `Authorization: Bearer <MCP_AUTH_TOKEN>`; others get `401`. Required when `MCP_HOST` is not a loopback address. |
 
   Connect a client, for example Claude Code (`.mcp.json`):
 
@@ -141,6 +144,7 @@ List all calendars returning both name and absolute URL. Pass a calendar's `url`
 Parameters: none
 
 Returns:
+
 - List of all available calendars
 
 ### list-events
@@ -148,11 +152,13 @@ Returns:
 List all events between start and end date in the calendar specified by its URL
 
 Parameters:
+
 - `calendarUrl`: string
 - `end`: string — End date (ISO 8601)
 - `start`: string — Start date (ISO 8601)
 
 Returns:
+
 - A list of events that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, and optionally `description` and `location`
 
 ### create-event
@@ -160,6 +166,7 @@ Returns:
 Creates an event in the calendar specified by its URL. For all-day events, set `wholeDay` to true. For a single-day all-day event, use `start` and `end` datetimes on the same calendar date; they do not need to be identical timestamps.
 
 Parameters:
+
 - `calendarUrl`: string
 - `description`: string (optional)
 - `end`: string — End datetime (ISO 8601)
@@ -179,6 +186,7 @@ Parameters:
 - `wholeDay`: boolean (optional) — Create as a whole-day event
 
 Returns:
+
 - The unique ID of the created event
 
 ### update-event
@@ -186,6 +194,7 @@ Returns:
 Updates an existing event in the calendar specified by its URL. Only provided fields are changed. For a one-day full-day event, set `wholeDay` to true and set `start` and `end` to the same calendar day.
 
 Parameters:
+
 - `calendarUrl`: string
 - `description`: string (optional)
 - `end`: string (optional)
@@ -206,6 +215,7 @@ Parameters:
 - `wholeDay`: boolean (optional) — Update whether this is a whole-day event
 
 Returns:
+
 - The unique ID of the updated event
 
 ### delete-event
@@ -213,10 +223,12 @@ Returns:
 Deletes an event in the calendar specified by its URL
 
 Parameters:
+
 - `calendarUrl`: string
 - `uid`: string — Unique identifier of the event to delete (obtained from list-events)
 
 Returns:
+
 - Confirmation message when the event is successfully deleted
 
 ### list-todos
@@ -224,6 +236,7 @@ Returns:
 List tasks (VTODOs) in the calendar specified by its URL. By default returns only open tasks (NEEDS-ACTION and IN-PROCESS), sorted by manual order then due date. Use `status` to include completed (`COMPLETED`) or all (`ALL`) tasks, and `limit`/`offset` to page through long lists.
 
 Parameters:
+
 - `calendarUrl`: string
 - `due_after`: string (optional) — Only tasks with a due date at or after this (ISO 8601). Undated tasks are excluded when a due window is set.
 - `due_before`: string (optional) — Only tasks with a due date at or before this (ISO 8601). Undated tasks are excluded when a due window is set.
@@ -232,6 +245,7 @@ Parameters:
 - `status`: enum (`OPEN` | `ALL` | `NEEDS-ACTION` | `COMPLETED` | `IN-PROCESS` | `CANCELLED`) (optional) — Filter by status. `OPEN` (default) = NEEDS-ACTION + IN-PROCESS; `ALL` = everything; or an exact status (NEEDS-ACTION, COMPLETED, IN-PROCESS, CANCELLED).
 
 Returns:
+
 - An object `{ todos, total, limit, offset }` where `total` is the count before pagination. Each todo has `uid`, `summary`, `status`, and optionally `due`, `start`, `completed`, `description`, `location`.
 
 ### create-todo
@@ -239,6 +253,7 @@ Returns:
 Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin.
 
 Parameters:
+
 - `calendarUrl`: string
 - `description`: string (optional)
 - `due`: string (optional) — Due datetime (ISO 8601)
@@ -248,6 +263,7 @@ Parameters:
 - `summary`: string
 
 Returns:
+
 - The unique ID of the created todo
 
 ### update-todo
@@ -255,6 +271,7 @@ Returns:
 Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. To mark a task done, prefer the `complete-todo` tool.
 
 Parameters:
+
 - `calendarUrl`: string
 - `description`: string (optional)
 - `due`: string (optional)
@@ -265,6 +282,7 @@ Parameters:
 - `uid`: string — Unique identifier of the todo to update (from list-todos)
 
 Returns:
+
 - The unique ID of the updated todo
 
 ### complete-todo
@@ -272,10 +290,12 @@ Returns:
 Marks a task (VTODO) as done. Sets its status to COMPLETED and records the completion time.
 
 Parameters:
+
 - `calendarUrl`: string
 - `uid`: string — Unique identifier of the todo to complete (from list-todos)
 
 Returns:
+
 - The unique ID of the completed todo
 
 ### delete-todo
@@ -283,10 +303,12 @@ Returns:
 Deletes a task (VTODO) in the calendar specified by its URL
 
 Parameters:
+
 - `calendarUrl`: string
 - `uid`: string — Unique identifier of the todo to delete (from list-todos)
 
 Returns:
+
 - Confirmation message when the todo is successfully deleted
 <!-- TOOLS:END -->
 

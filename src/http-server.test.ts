@@ -1,5 +1,7 @@
-import { request, type Server } from "node:http";
-import { type AddressInfo, connect as connectSocket } from "node:net";
+import type { Server } from "node:http";
+import { request } from "node:http";
+import type { AddressInfo } from "node:net";
+import { connect as connectSocket } from "node:net";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

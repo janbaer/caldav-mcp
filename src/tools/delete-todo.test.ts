@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type CalDAVClient, CalDAVError } from "ts-caldav";
+import type { CalDAVClient } from "ts-caldav";
+import { CalDAVError } from "ts-caldav";
 import { describe, expect, it, vi } from "vitest";
 import { registerDeleteTodo } from "./delete-todo.js";
 
