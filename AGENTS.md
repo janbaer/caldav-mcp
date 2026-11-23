@@ -7,6 +7,11 @@ MCP server exposing CalDAV calendar operations as tools for AI assistants.
 - Credentials come from `.env` (see `.env.example`); dev loads it via `tsx --env-file=.env`, not `dotenv`.
 - Avoid import cycles; move shared code into a module both sides import.
 
+## Before committing
+- Run `npm install` once after cloning: its `prepare` script installs the git hooks (Biome, tests, docs, commitlint). Without it nothing checks your commits locally.
+- Never commit with `--no-verify`. If a hook fails, fix the cause; `npm run check:fix` fixes most Biome errors.
+- Run `npm run validate` before pushing; CI runs the same checks and fails the PR otherwise.
+
 ## Workflow
 - After implementing a new feature run the smoke tests (`npm run smoke` and `npm run smoke:agent`) to verify it works as expected.
 - Skip both for docs-only, test-only, or CI/tooling changes that don't touch `src/`. For other `src/` changes, `smoke` is usually enough; run `npm run smoke:http` too when `src/index.ts` or `src/http-*.ts` change, and `smoke:agent` when tool names, descriptions, schemas, or error messages change.

@@ -27,6 +27,38 @@ jobs:
         uses: biomejs/setup-biome@v2
       - name: Run Biome CI
         run: npm run check:ci
+      - name: Explain how to fix
+        if: failure()
+        run: |
+          msg="Run 'npm run check:fix' to fix most of these, then 'npm run check' for the rest. If the pre-commit hook didn't catch them, it isn't installed: run 'npm install' (it installs the hooks) and don't commit with --no-verify."
+          echo "::error::$msg"
+          echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+
+  gitleaks:
+    # The pre-commit hook skips the scan when gitleaks isn't installed
+    # locally, so pull requests are scanned here.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
+          echo "${GITLEAKS_SHA256}  ${tarball}" | sha256sum -c -
+          tar -xzf "$tarball" gitleaks
+      - name: Scan the pull request's commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: ./gitleaks git --redact --no-banner --log-opts="${BASE_SHA}..${HEAD_SHA}"
 
   knip:
     runs-on: ubuntu-latest
