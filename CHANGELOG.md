@@ -1,3 +1,9 @@
+## [0.11.4](https://github.com/langmail/caldav-mcp/compare/v0.11.3...v0.11.4) (2026-11-23)
+
+### Bug Fixes
+
+* **ci:** run the release job on Node 26 for semantic-release 26 ([#180](https://github.com/langmail/caldav-mcp/issues/180)) ([342ec8d](https://github.com/langmail/caldav-mcp/commit/342ec8df3a2786f009ef805f2c77fd0d60c858fd)), closes [#178](https://github.com/langmail/caldav-mcp/issues/178)
+
 ## [0.11.3](https://github.com/langmail/caldav-mcp/compare/v0.11.2...v0.11.3) (2026-11-19)
 
 
