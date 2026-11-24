@@ -7,7 +7,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["!!**/dist", "!!**/.github"]
+		"includes": ["!!**/dist", "!!**/.github", "!CHANGELOG.md"]
 	},
 	"formatter": {
 		"enabled": true,

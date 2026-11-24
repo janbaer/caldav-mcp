@@ -54,6 +54,7 @@ export function localDayToWholeDayDate(value: Date): Date {
 export function inclusiveEndToWholeDayDate(end: Date, start: Date): Date {
 	const last = localDayToWholeDayDate(new Date(end.getTime() - 1));
 	const first = localDayToWholeDayDate(start);
+	// biome-ignore lint/complexity/useMathMinMax: Math.max returns a number; this must return the later Date.
 	return last < first ? first : last;
 }
 
@@ -99,7 +100,7 @@ export const eventDateSchema = z.union([
 	z.string().date(),
 ]);
 
-const PLAIN_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const PLAIN_DATE = /^\d{4}-\d{2}-\d{2}$/u;
 
 /**
  * Parses a `start` or `end` argument. A plain `YYYY-MM-DD`, which is what

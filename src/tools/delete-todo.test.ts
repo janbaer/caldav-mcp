@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type CalDAVClient, CalDAVError } from "ts-caldav";
-import { describe, expect, test, vi } from "vitest";
+import type { CalDAVClient } from "ts-caldav";
+import { CalDAVError } from "ts-caldav";
+import { describe, expect, it, vi } from "vitest";
 import { registerDeleteTodo } from "./delete-todo.js";
 
 type ToolHandler = (params: {
@@ -24,7 +25,7 @@ function makeServer() {
 }
 
 describe("registerDeleteTodo", () => {
-	test("looks up the etag by href and deletes the todo", async () => {
+	it("looks up the etag by href and deletes the todo", async () => {
 		const mockClient = {
 			deleteTodo: vi.fn().mockResolvedValue(undefined),
 			getETag: vi.fn().mockResolvedValue('"etag-1"'),
@@ -47,7 +48,7 @@ describe("registerDeleteTodo", () => {
 		expect(result.content[0].text).toBe("Todo deleted");
 	});
 
-	test("translates a 404 into a friendly not-found error and skips the delete", async () => {
+	it("translates a 404 into a friendly not-found error and skips the delete", async () => {
 		const mockClient = {
 			deleteTodo: vi.fn(),
 			getETag: vi
@@ -67,7 +68,7 @@ describe("registerDeleteTodo", () => {
 		expect(mockClient.deleteTodo).not.toHaveBeenCalled();
 	});
 
-	test("propagates a non-404 getETag failure unchanged", async () => {
+	it("propagates a non-404 getETag failure unchanged", async () => {
 		const mockClient = {
 			deleteTodo: vi.fn(),
 			getETag: vi

@@ -1,5 +1,5 @@
 import type { Event } from "ts-caldav";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	carryOverWholeDayDates,
 	inclusiveEndToWholeDayDate,
@@ -10,31 +10,31 @@ import {
 } from "./whole-day-date.js";
 
 describe("toWholeDayDate", () => {
-	test("keeps the calendar date for a UTC input", () => {
+	it("keeps the calendar date for a UTC input", () => {
 		expect(toWholeDayDate("2026-09-30T00:00:00.000Z").toISOString()).toBe(
 			"2026-09-30T00:00:00.000Z"
 		);
 	});
 
-	test("keeps the calendar date for a positive offset (Asia/Seoul, +09:00)", () => {
+	it("keeps the calendar date for a positive offset (Asia/Seoul, +09:00)", () => {
 		expect(toWholeDayDate("2026-09-30T00:00:00+09:00").toISOString()).toBe(
 			"2026-09-30T00:00:00.000Z"
 		);
 	});
 
-	test("keeps the calendar date for a negative offset (-07:00)", () => {
+	it("keeps the calendar date for a negative offset (-07:00)", () => {
 		expect(toWholeDayDate("2026-09-30T00:00:00-07:00").toISOString()).toBe(
 			"2026-09-30T00:00:00.000Z"
 		);
 	});
 
-	test("keeps the calendar date at a month boundary (Jan 31)", () => {
+	it("keeps the calendar date at a month boundary (Jan 31)", () => {
 		expect(toWholeDayDate("2027-01-31T00:00:00+09:00").toISOString()).toBe(
 			"2027-01-31T00:00:00.000Z"
 		);
 	});
 
-	test("keeps the calendar date on a leap day (Feb 29)", () => {
+	it("keeps the calendar date on a leap day (Feb 29)", () => {
 		expect(toWholeDayDate("2028-02-29T00:00:00+09:00").toISOString()).toBe(
 			"2028-02-29T00:00:00.000Z"
 		);
@@ -53,7 +53,7 @@ describe("stored whole-day dates", () => {
 		vi.unstubAllEnvs();
 	});
 
-	test("localDayToWholeDayDate anchors the local day at UTC midnight", () => {
+	it("localDayToWholeDayDate anchors the local day at UTC midnight", () => {
 		const start = new Date(2026, 7, 18);
 		expect(start.toISOString()).toBe("2026-08-17T22:00:00.000Z");
 		expect(localDayToWholeDayDate(start).toISOString()).toBe(
@@ -61,7 +61,7 @@ describe("stored whole-day dates", () => {
 		);
 	});
 
-	test("localDayToWholeDayDate takes the local day of a timed instant", () => {
+	it("localDayToWholeDayDate takes the local day of a timed instant", () => {
 		// 00:30 in Berlin, still the 17th in UTC.
 		const timed = new Date("2026-08-18T00:30:00+02:00");
 		expect(localDayToWholeDayDate(timed).toISOString()).toBe(
@@ -69,7 +69,7 @@ describe("stored whole-day dates", () => {
 		);
 	});
 
-	test("inclusiveEndToWholeDayDate turns the exclusive DTEND into the last day", () => {
+	it("inclusiveEndToWholeDayDate turns the exclusive DTEND into the last day", () => {
 		expect(
 			inclusiveEndToWholeDayDate(
 				new Date(2026, 7, 23),
@@ -78,7 +78,7 @@ describe("stored whole-day dates", () => {
 		).toBe("2026-08-22T00:00:00.000Z");
 	});
 
-	test("inclusiveEndToWholeDayDate steps back across a month boundary", () => {
+	it("inclusiveEndToWholeDayDate steps back across a month boundary", () => {
 		expect(
 			inclusiveEndToWholeDayDate(
 				new Date(2026, 9, 1),
@@ -87,7 +87,7 @@ describe("stored whole-day dates", () => {
 		).toBe("2026-09-30T00:00:00.000Z");
 	});
 
-	test("inclusiveEndToWholeDayDate keeps a timed end on its own day", () => {
+	it("inclusiveEndToWholeDayDate keeps a timed end on its own day", () => {
 		expect(
 			inclusiveEndToWholeDayDate(
 				new Date("2026-08-18T01:30:00+02:00"),
@@ -96,14 +96,14 @@ describe("stored whole-day dates", () => {
 		).toBe("2026-08-18T00:00:00.000Z");
 	});
 
-	test("inclusiveEndToWholeDayDate never ends before the start (DTEND equal to DTSTART)", () => {
+	it("inclusiveEndToWholeDayDate never ends before the start (DTEND equal to DTSTART)", () => {
 		const day = new Date(2026, 7, 18);
 		expect(inclusiveEndToWholeDayDate(day, day).toISOString()).toBe(
 			"2026-08-18T00:00:00.000Z"
 		);
 	});
 
-	test("carryOverWholeDayDates reshapes every date ts-caldav writes", () => {
+	it("carryOverWholeDayDates reshapes every date ts-caldav writes", () => {
 		const existing: Event = {
 			end: new Date(2026, 9, 1),
 			etag: '"1"',
@@ -131,7 +131,7 @@ describe("stored whole-day dates", () => {
 		expect(carried.recurrenceId).toEqual(new Date("2028-09-30T00:00:00.000Z"));
 	});
 
-	test("carryOverWholeDayDates leaves out fields the event doesn't have", () => {
+	it("carryOverWholeDayDates leaves out fields the event doesn't have", () => {
 		const carried = carryOverWholeDayDates({
 			etag: '"1"',
 			href: "/f/test-calendar/one-off.ics",
@@ -149,32 +149,32 @@ describe("wholeDaySpan", () => {
 	const event = (start: Date, end?: Date) =>
 		({ end, start, summary: "x", uid: "u", wholeDay: true }) as Event;
 
-	test("reports the last covered day, not the exclusive DTEND", () => {
+	it("reports the last covered day, not the exclusive DTEND", () => {
 		expect(
 			wholeDaySpan(event(new Date(2026, 7, 25), new Date(2026, 7, 30)))
 		).toEqual({ end: "2026-08-29", start: "2026-08-25", wholeDay: true });
 	});
 
-	test("keeps a one-day event on one date", () => {
+	it("keeps a one-day event on one date", () => {
 		expect(
 			wholeDaySpan(event(new Date(2026, 7, 25), new Date(2026, 7, 26)))
 		).toMatchObject({ end: "2026-08-25", start: "2026-08-25" });
 	});
 
-	test("puts start and end on the same date without DTEND", () => {
+	it("puts start and end on the same date without DTEND", () => {
 		expect(wholeDaySpan(event(new Date(2026, 7, 25)))).toMatchObject({
 			end: "2026-08-25",
 			start: "2026-08-25",
 		});
 	});
 
-	test("counts calendar days across the October clock change", () => {
+	it("counts calendar days across the October clock change", () => {
 		expect(
 			wholeDaySpan(event(new Date(2026, 9, 24), new Date(2026, 9, 28)))
 		).toMatchObject({ end: "2026-10-27", start: "2026-10-24" });
 	});
 
-	test("pads years below 1000", () => {
+	it("pads years below 1000", () => {
 		const start = new Date(2000, 0, 1);
 		start.setFullYear(999);
 		const end = new Date(start);
@@ -182,30 +182,30 @@ describe("wholeDaySpan", () => {
 		expect(wholeDaySpan(event(start, end)).start).toBe("0999-01-01");
 	});
 
-	test("does not hide an end before the start", () => {
+	it("does not hide an end before the start", () => {
 		expect(
 			wholeDaySpan(event(new Date(2026, 7, 25), new Date(2026, 7, 25)))
 		).toMatchObject({ end: "2026-08-24", start: "2026-08-25" });
 	});
 });
 
-const PLAIN_DATE_ERROR = /plain date/;
+const PLAIN_DATE_ERROR = /plain date/u;
 
 describe("toEventDate", () => {
-	test("takes a plain date for a whole-day event", () => {
+	it("takes a plain date for a whole-day event", () => {
 		expect(toEventDate("2026-08-25", true).toISOString()).toBe(
 			"2026-08-25T00:00:00.000Z"
 		);
 	});
 
-	test("rejects a plain date for a timed event", () => {
+	it("rejects a plain date for a timed event", () => {
 		expect(() => toEventDate("2026-08-25", false)).toThrow(PLAIN_DATE_ERROR);
 		expect(() => toEventDate("2026-08-25", undefined)).toThrow(
 			PLAIN_DATE_ERROR
 		);
 	});
 
-	test("parses a datetime for a timed event", () => {
+	it("parses a datetime for a timed event", () => {
 		expect(toEventDate("2026-08-25T10:00:00Z", false).toISOString()).toBe(
 			"2026-08-25T10:00:00.000Z"
 		);

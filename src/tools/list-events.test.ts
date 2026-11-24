@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { registerListEvents } from "./list-events.js";
 
 type ToolHandler = (params: {
@@ -10,7 +10,7 @@ type ToolHandler = (params: {
 }) => Promise<{ content: { type: string; text: string }[] }>;
 
 describe("registerListEvents", () => {
-	test("returns uid field for each event", async () => {
+	it("returns uid field for each event", async () => {
 		// Create mock CalDAV client
 		const mockClient = {
 			getEvents: vi.fn().mockResolvedValue([
@@ -71,7 +71,7 @@ describe("registerListEvents", () => {
 		expect(events[1]).toHaveProperty("summary", "Another Event");
 	});
 
-	test("includes description and location when present, omits them when absent", async () => {
+	it("includes description and location when present, omits them when absent", async () => {
 		const mockClient = {
 			getEvents: vi.fn().mockResolvedValue([
 				{
@@ -119,7 +119,7 @@ describe("registerListEvents", () => {
 		expect(events[1]).not.toHaveProperty("location");
 	});
 
-	test("includes events that started before the window but overlap it", async () => {
+	it("includes events that started before the window but overlap it", async () => {
 		const mockClient = {
 			getEvents: vi.fn().mockResolvedValue([
 				{
@@ -174,7 +174,7 @@ describe("registerListEvents", () => {
 		expect(events[0]).toHaveProperty("end", "2026-08-22T09:00:00.000Z");
 	});
 
-	test("reports a whole-day event as plain dates and leaves timed events alone", async () => {
+	it("reports a whole-day event as plain dates and leaves timed events alone", async () => {
 		const mockClient = {
 			getEvents: vi.fn().mockResolvedValue([
 				{
@@ -225,5 +225,60 @@ describe("registerListEvents", () => {
 			start: "2026-08-25T10:00:00.000Z",
 		});
 		expect(lunch).not.toHaveProperty("wholeDay");
+	});
+
+	it("returns organizer and attendees without mailto:", async () => {
+		const mockClient = {
+			getEvents: vi.fn().mockResolvedValue([
+				{
+					customFields: {
+						attendee: ["mailto:a@example.com", "mailto:b@example.com"],
+						organizer: "mailto:o@example.com",
+					},
+					end: new Date("2025-10-13T11:00:00Z"),
+					start: new Date("2025-10-13T10:00:00Z"),
+					summary: "Meeting",
+					uid: "event-scheduled",
+				},
+				{
+					end: new Date("2025-10-14T15:00:00Z"),
+					start: new Date("2025-10-14T14:00:00Z"),
+					summary: "Solo",
+					uid: "event-solo",
+				},
+			]),
+		};
+
+		let toolHandler: ToolHandler | null = null;
+		const server = new McpServer({ name: "test-server", version: "0.1.0" });
+		const originalRegisterTool = server.registerTool.bind(server);
+		server.registerTool = vi.fn(
+			(name: string, config: unknown, handler: ToolHandler) => {
+				if (name === "list-events") {
+					toolHandler = handler;
+				}
+				return originalRegisterTool(name, config, handler);
+			}
+		) as typeof server.registerTool;
+
+		registerListEvents(mockClient as unknown as CalDAVClient, server);
+		if (!toolHandler) {
+			throw new Error("handler not registered");
+		}
+
+		const result = await (toolHandler as ToolHandler)({
+			calendarUrl: "/test/calendar/",
+			end: "2025-10-31T23:59:59Z",
+			start: "2025-10-01T00:00:00Z",
+		});
+
+		const events = JSON.parse(result.content[0].text);
+		expect(events[0]).toHaveProperty("organizer", "o@example.com");
+		expect(events[0]).toHaveProperty("attendees", [
+			"a@example.com",
+			"b@example.com",
+		]);
+		expect(events[1]).not.toHaveProperty("organizer");
+		expect(events[1]).not.toHaveProperty("attendees");
 	});
 });
