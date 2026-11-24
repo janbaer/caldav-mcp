@@ -7,7 +7,6 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { hrefFor } from "../src/tools/caldav-href.js";
 
 const ABSOLUTE_URL = /^https?:\/\//u;
-const BARE_DATE = /^\d{4}-\d{2}-\d{2}$/u;
 const RRULE_LINE = /^RRULE:(?<rule>.*)$/mu;
 const RRULE_UNTIL = /(?:^|;)UNTIL=(?<until>[^;]*)/u;
 
@@ -58,21 +57,6 @@ function expectIcsProp(ics: string, name: string, expectedValue: string) {
 	if (actual !== expectedValue) {
 		throw new Error(`${name} mismatch: ${actual} !== ${expectedValue}\n${ics}`);
 	}
-}
-
-// A whole-day start comes back as a bare date, taken as is. Older servers
-// return the instant of local midnight; read that as a local calendar date so
-// the check holds in any TZ.
-function listedCalendarDate(value: string): string {
-	if (BARE_DATE.test(value)) {
-		return value;
-	}
-	const d = new Date(value);
-	return [
-		d.getFullYear(),
-		String(d.getMonth() + 1).padStart(2, "0"),
-		String(d.getDate()).padStart(2, "0"),
-	].join("-");
 }
 
 async function smokeWholeDayEvents(client: Client, calendarUrl: string) {
@@ -216,9 +200,7 @@ async function smokeWholeDayEvents(client: Client, calendarUrl: string) {
 	});
 	try {
 		const offsetWholeDayListed = await listOffsetWholeDay(offsetWholeDayUid);
-		const offsetWholeDayListedDate = listedCalendarDate(
-			offsetWholeDayListed.start
-		);
+		const offsetWholeDayListedDate = offsetWholeDayListed.start;
 		if (offsetWholeDayListedDate !== offsetWholeDayDate) {
 			throw new Error(
 				`Whole-day event date shifted on create: expected ${offsetWholeDayDate}, got ${offsetWholeDayListedDate} (input ${offsetWholeDayIso})`
@@ -248,9 +230,7 @@ async function smokeWholeDayEvents(client: Client, calendarUrl: string) {
 				`Location not updated: ${offsetWholeDayUpdated.location} !== ${offsetWholeDayLocation}`
 			);
 		}
-		const offsetWholeDayUpdatedDate = listedCalendarDate(
-			offsetWholeDayUpdated.start
-		);
+		const offsetWholeDayUpdatedDate = offsetWholeDayUpdated.start;
 		if (offsetWholeDayUpdatedDate !== offsetWholeDayDate) {
 			throw new Error(
 				`Whole-day event date shifted on a location-only update: expected ${offsetWholeDayDate}, got ${offsetWholeDayUpdatedDate}`

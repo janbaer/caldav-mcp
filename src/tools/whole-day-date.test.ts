@@ -152,7 +152,7 @@ describe("wholeDaySpan", () => {
 	it("reports the last covered day, not the exclusive DTEND", () => {
 		expect(
 			wholeDaySpan(event(new Date(2026, 7, 25), new Date(2026, 7, 30)))
-		).toEqual({ end: "2026-08-29", start: "2026-08-25", wholeDay: true });
+		).toEqual({ end: "2026-08-29", start: "2026-08-25" });
 	});
 
 	it("keeps a one-day event on one date", () => {
@@ -182,10 +182,13 @@ describe("wholeDaySpan", () => {
 		expect(wholeDaySpan(event(start, end)).start).toBe("0999-01-01");
 	});
 
-	it("does not hide an end before the start", () => {
+	it("never ends before the start", () => {
 		expect(
 			wholeDaySpan(event(new Date(2026, 7, 25), new Date(2026, 7, 25)))
-		).toMatchObject({ end: "2026-08-24", start: "2026-08-25" });
+		).toMatchObject({ end: "2026-08-25", start: "2026-08-25" });
+		expect(
+			wholeDaySpan(event(new Date(2026, 7, 25), new Date(2026, 7, 25, 10)))
+		).toMatchObject({ end: "2026-08-25", start: "2026-08-25" });
 	});
 });
 

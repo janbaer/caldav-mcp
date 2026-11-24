@@ -53,7 +53,7 @@ export function registerListEvents(client: CalDAVClient, server: McpServer) {
 				const { organizer, attendees } = readScheduling(e.customFields);
 				return {
 					...(e.wholeDay === true
-						? wholeDaySpan(e)
+						? { ...wholeDaySpan(e), wholeDay: true }
 						: { end: e.end, start: e.start }),
 					summary: e.summary,
 					uid: e.uid,

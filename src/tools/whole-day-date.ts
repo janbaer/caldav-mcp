@@ -95,12 +95,24 @@ export function carryOverWholeDayDates(existing: Event): Partial<Event> {
 	return carried;
 }
 
-export const eventDateSchema = z.union([
-	z.string().datetime({ offset: true }),
-	z.string().date(),
-]);
+const isoDateTime = z.iso.datetime({ offset: true });
+const isoDate = z.iso.date();
 
-const PLAIN_DATE = /^\d{4}-\d{2}-\d{2}$/u;
+const eventDateSchema = z
+	.string()
+	.refine(
+		(value) =>
+			isoDateTime.safeParse(value).success || isoDate.safeParse(value).success,
+		{ message: "Expected an ISO 8601 datetime or a plain date (YYYY-MM-DD)" }
+	);
+
+export const eventStartSchema = eventDateSchema.describe(
+	"Start datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD)."
+);
+
+export const eventEndSchema = eventDateSchema.describe(
+	"End datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive)."
+);
 
 /**
  * Parses a `start` or `end` argument. A plain `YYYY-MM-DD`, which is what
@@ -114,19 +126,12 @@ export function toEventDate(
 	if (wholeDay) {
 		return toWholeDayDate(value);
 	}
-	if (PLAIN_DATE.test(value)) {
+	if (isoDate.safeParse(value).success) {
 		throw new Error(
 			`"${value}" is a plain date, which is only valid for a whole-day event. Pass a full ISO 8601 datetime, or set wholeDay to true.`
 		);
 	}
 	return new Date(value);
-}
-
-function calendarDate(value: Date): string {
-	const year = String(value.getFullYear()).padStart(4, "0");
-	const month = String(value.getMonth() + 1).padStart(2, "0");
-	const day = String(value.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
 }
 
 /**
@@ -140,13 +145,10 @@ function calendarDate(value: Date): string {
  */
 export function wholeDaySpan(event: Event) {
 	const end = event.end as Date | undefined;
-	const lastDay = end ? new Date(end) : new Date(event.start);
-	if (end) {
-		lastDay.setDate(lastDay.getDate() - 1);
-	}
+	const first = localDayToWholeDayDate(event.start);
+	const last = end ? inclusiveEndToWholeDayDate(end, event.start) : first;
 	return {
-		end: calendarDate(lastDay),
-		start: calendarDate(event.start),
-		wholeDay: true as const,
+		end: last.toISOString().slice(0, 10),
+		start: first.toISOString().slice(0, 10),
 	};
 }

@@ -13,7 +13,8 @@ import type { RecurrenceRuleInput } from "./recurrence-rule.js";
 import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
 import {
 	carryOverWholeDayDates,
-	eventDateSchema,
+	eventEndSchema,
+	eventStartSchema,
 	toEventDate,
 } from "./whole-day-date.js";
 
@@ -37,7 +38,7 @@ export const updateEventDefinition = {
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		end: eventDateSchema.optional(),
+		end: eventEndSchema.optional(),
 		location: z.string().optional(),
 		organizer: emailAddressOrEmptySchema
 			.optional()
@@ -45,7 +46,7 @@ export const updateEventDefinition = {
 				"Organizer email (no mailto:); pass to set or change ORGANIZER, or an empty string to remove it (only when the event has no attendees). Omit to leave it as stored."
 			),
 		recurrenceRule: recurrenceRuleSchema.optional(),
-		start: eventDateSchema.optional(),
+		start: eventStartSchema.optional(),
 		attendees: z
 			.array(emailAddressSchema)
 			.optional()

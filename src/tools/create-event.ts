@@ -9,7 +9,11 @@ import {
 } from "./calendar-address.js";
 import type { RecurrenceRuleInput } from "./recurrence-rule.js";
 import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
-import { eventDateSchema, toEventDate } from "./whole-day-date.js";
+import {
+	eventEndSchema,
+	eventStartSchema,
+	toEventDate,
+} from "./whole-day-date.js";
 
 interface CreateEventInput {
 	attendees?: string[] | undefined;
@@ -30,9 +34,7 @@ export const createEventDefinition = {
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		end: eventDateSchema.describe(
-			"End datetime (ISO 8601); for a whole-day event a plain date (YYYY-MM-DD) is also accepted"
-		),
+		end: eventEndSchema,
 		location: z.string().optional(),
 		organizer: emailAddressSchema
 			.optional()
@@ -40,9 +42,7 @@ export const createEventDefinition = {
 				"Organizer email (no mailto:), written as ORGANIZER; a scheduling-capable server (e.g. Radicale with the email/iMIP hook) uses it to send invitations, updates and cancellations to the attendees."
 			),
 		recurrenceRule: recurrenceRuleSchema.optional(),
-		start: eventDateSchema.describe(
-			"Start datetime (ISO 8601); for a whole-day event a plain date (YYYY-MM-DD) is also accepted"
-		),
+		start: eventStartSchema,
 		attendees: z
 			.array(emailAddressSchema)
 			.optional()
