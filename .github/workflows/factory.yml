@@ -1,16 +1,22 @@
 name: Factory
-
-# Fails when a skill in skills-lock.json differs from its pinned commit.
-# Shared skills come from langmail/factory, whose sync PRs move this pin.
-
+# Fails when a copy from langmail/factory (a skill in skills-lock.json or
+# .github/labels.yml) differs from its pinned commit, and on main syncs the
+# labels to GitHub. The factory's sync PRs move these pins.
 on:
   pull_request:
   push:
     branches: [main]
-
 permissions:
   contents: read
-
 jobs:
   skills:
     uses: langmail/factory/.github/workflows/skills-check.yml@7ec648a3e03fe811679d15523b0c2b3dc650095e # v0.1.0
+  labels:
+    if: github.event_name == 'push'
+    uses: langmail/factory/.github/workflows/labels.yml@8f8cd65dfda9c6b9a4cbc48fc00cf05ff4e1af08 # v0.2.0
+    # contents: write because GitHub drops issue type changes from a token
+    # without push access.
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
