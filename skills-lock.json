@@ -1,17 +1,53 @@
 {
-	"version": 1,
-	"skills": {
-		"scion-like-git": {
-			"source": "unvibe-org/skills",
-			"sourceType": "github",
-			"skillPath": "plugins/scion-like-git/skills/scion-like-git/SKILL.md",
-			"computedHash": "dc59162ddfceaed11c07f21fba59b3c4394fb558449ba5cec488b7fd393d757e"
-		},
-		"ultracite": {
-			"source": "haydenbleasel/ultracite",
-			"sourceType": "github",
-			"skillPath": "skills/ultracite/SKILL.md",
-			"computedHash": "786edd8e07ffab37d1d27c68a1a991b0fe4d0ba911fc97d4f93d232115f0485e"
-		}
-	}
+  "version": 2,
+  "skills": {
+    "grill-me": {
+      "source": "langmail/factory",
+      "ref": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "commit": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "sourceType": "github",
+      "skillPath": "skills/grill-me/SKILL.md",
+      "computedHash": "7b8272212181514e50c371cbd2fa97da8b4280450cbe4e54c70b580595b7b77e"
+    },
+    "grilling": {
+      "source": "langmail/factory",
+      "ref": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "commit": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "sourceType": "github",
+      "skillPath": "skills/grilling/SKILL.md",
+      "computedHash": "fac97e7604fabc21eb4d791432a1af533561eedd41781d3fb20f5a2d4f03e2cd"
+    },
+    "handover-prompt": {
+      "source": "langmail/factory",
+      "ref": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "commit": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "sourceType": "github",
+      "skillPath": "skills/handover-prompt/SKILL.md",
+      "computedHash": "86bd42151eec3c0c3d885e1e964ee2532b897e54ea319c0a63320d7f367a9bf2"
+    },
+    "review-agents-md": {
+      "source": "langmail/factory",
+      "ref": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "commit": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "sourceType": "github",
+      "skillPath": "skills/review-agents-md/SKILL.md",
+      "computedHash": "83c2414a6b400a95c3041b0df1f771bc4415acd96c1dfaf9278c8c8cda2107f4"
+    },
+    "scion-like-git": {
+      "source": "langmail/factory",
+      "ref": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "commit": "7ec648a3e03fe811679d15523b0c2b3dc650095e",
+      "sourceType": "github",
+      "skillPath": "skills/scion-like-git/SKILL.md",
+      "computedHash": "9990bdfb32060daf8393239bfa364aa550d15af0c0391947a31961935f28b087"
+    },
+    "ultracite": {
+      "source": "haydenbleasel/ultracite",
+      "ref": "f5c8af0411ddb96114780f5f768d2abd6bd22f7e",
+      "commit": "f5c8af0411ddb96114780f5f768d2abd6bd22f7e",
+      "sourceType": "github",
+      "skillPath": "skills/ultracite/SKILL.md",
+      "computedHash": "52eac7a3ac5f3117d8d70f1058eed56403e9755fc93e0ba944c4c501fa560ba6"
+    }
+  }
 }

@@ -1,0 +1,16 @@
+name: Factory
+
+# Fails when a skill in skills-lock.json differs from its pinned commit.
+# Shared skills come from langmail/factory, whose sync PRs move this pin.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  skills:
+    uses: langmail/factory/.github/workflows/skills-check.yml@7ec648a3e03fe811679d15523b0c2b3dc650095e # v0.1.0
