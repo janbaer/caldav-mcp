@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   review:
-    uses: langmail/factory/.github/workflows/review.yml@edaf0d9e5519328e147575dad7dd6bd46fc710ca # v0.3.0
+    uses: langmail/factory/.github/workflows/review.yml@9bf055020fc63aca401666c065a0c7537f0c6b1b # v0.4.0
     permissions:
       contents: read
       pull-requests: write
