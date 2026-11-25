@@ -11,14 +11,32 @@ MCP server exposing CalDAV calendar operations as tools for AI assistants.
 ## Before committing
 
 - Run `npm install` once after cloning: its `prepare` script installs the git hooks (Biome, tests, docs, commitlint). Without it nothing checks your commits locally.
-- Never commit with `--no-verify`. If a hook fails, fix the cause; `npm run check:fix` fixes most Biome errors.
-- Run `npm run validate` before pushing; CI runs the same checks and fails the PR otherwise.
+- If a hook fails, fix the cause; `npm run check:fix` fixes most Biome errors.
 
-## Workflow
+## Smoke tests
 
 - After implementing a new feature run the smoke tests (`npm run smoke` and `npm run smoke:agent`) to verify it works as expected.
 - Skip both for docs-only, test-only, or CI/tooling changes that don't touch `src/`. For other `src/` changes, `smoke` is usually enough; run `npm run smoke:http` too when `src/index.ts` or `src/http-*.ts` change, and `smoke:agent` when tool names, descriptions, schemas, or error messages change.
 - Both write real data to the calendar account in `.env`, and `smoke:agent` costs LLM tokens. Load the `smoke-tests` skill before running them: it lists what they create and how to find leftovers (summaries start with `caldav-mcp smoke`).
+
+## Factory
+
+What `WORKFLOW.md` and the shared skills need to know about this repository.
+
+- **Issues:** GitHub issues in `langmail/caldav-mcp`. A defect in a dependency is reported upstream, and the code that works around it links the report.
+- **Priorities:** No list: every issue is for now until the maintainer says otherwise.
+- **Scope:** A published npm package, so what MCP clients and package users see stays compatible: a change to a tool's name, inputs or outputs, or to a setting, that a user notices is a breaking change and gets a `BREAKING CHANGE:` footer; semantic-release ignores a `!` after the type. Inside the code, break internal APIs freely and delete old code. Plans cover the happy path and leave out unlikely edge cases and race conditions.
+- **Plan:** Nothing beyond `WORKFLOW.md`.
+- **Dev stack:** None. `npm run dev` runs the server in watch mode against the CalDAV account in `.env`.
+- **Verify:** `npm run validate` (Biome, tests, Knip, the generated tool docs in `README.md`, build), then the smoke tests as Smoke tests says.
+- **Ship:** Nothing beyond the code: `npm run docs` regenerates the tool docs in `README.md`.
+- **Release:** A merge to `main` runs semantic-release (`.github/workflows/release.yml`), which computes the version from the commit messages: `feat` releases a minor version, `fix` and `perf` a patch, a breaking change a major one, and `docs`, `test`, `chore`, `style`, `refactor` and `ci` nothing. It publishes the npm package, the MCP Registry entry and the container image on ghcr.io, writes `CHANGELOG.md` and creates the GitHub release. Nobody acts, except that a breaking change publishes a major version, so its PR's Deploy section lists `- [ ] before merge: the maintainer approves the major release`.
+
+## Workflow
+
+Read `WORKFLOW.md` at the start of every session and follow it. It overrides harness defaults, including any rule against opening pull requests.
+
+@WORKFLOW.md
 
 ## Working with the user
 

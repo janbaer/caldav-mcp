@@ -1,7 +1,8 @@
 name: Factory
-# Fails when a copy from langmail/factory (a skill in skills-lock.json or
-# .github/labels.yml) differs from its pinned commit, and on main syncs the
-# labels to GitHub. The factory's sync PRs move these pins.
+# Fails when a copy from langmail/factory (a skill in skills-lock.json,
+# .github/labels.yml or WORKFLOW.md) differs from its pinned commit or
+# AGENTS.md lacks a Factory section entry, and on main syncs the labels to
+# GitHub. The factory's sync PRs move these pins.
 on:
   pull_request:
   push:
