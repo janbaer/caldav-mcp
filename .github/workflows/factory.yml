@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   skills:
-    uses: langmail/factory/.github/workflows/skills-check.yml@7ec648a3e03fe811679d15523b0c2b3dc650095e # v0.1.0
+    uses: langmail/factory/.github/workflows/skills-check.yml@8f8cd65dfda9c6b9a4cbc48fc00cf05ff4e1af08 # v0.2.0
   labels:
     if: github.event_name == 'push'
     uses: langmail/factory/.github/workflows/labels.yml@8f8cd65dfda9c6b9a4cbc48fc00cf05ff4e1af08 # v0.2.0
