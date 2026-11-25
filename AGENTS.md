@@ -23,12 +23,12 @@ MCP server exposing CalDAV calendar operations as tools for AI assistants.
 
 What `WORKFLOW.md` and the shared skills need to know about this repository.
 
-- **Issues:** GitHub issues in `langmail/caldav-mcp`. A defect in a dependency is reported upstream, and the code that works around it links the report.
+- **Issues:** GitHub issues in `langmail/caldav-mcp`. A bug report needs the tool and its arguments, the expected and the actual result, the error text and the CalDAV server (Nextcloud, iCloud, Radicale, …); a date bug also needs the timezone. A defect in a dependency (`ts-caldav` or a server) is reported upstream, and the code that works around it links the report.
 - **Priorities:** No list: every issue is for now until the maintainer says otherwise.
 - **Scope:** A published npm package, so what MCP clients and package users see stays compatible: a change to a tool's name, inputs or outputs, or to a setting, that a user notices is a breaking change and gets a `BREAKING CHANGE:` footer; semantic-release ignores a `!` after the type. Inside the code, break internal APIs freely and delete old code. Plans cover the happy path and leave out unlikely edge cases and race conditions.
 - **Plan:** Nothing beyond `WORKFLOW.md`.
 - **Dev stack:** None. `npm run dev` runs the server in watch mode against the CalDAV account in `.env`.
-- **Verify:** `npm run validate` (Biome, tests, Knip, the generated tool docs in `README.md`, build), then the smoke tests as Smoke tests says.
+- **Verify:** `npm run validate` (Biome, tests, Knip, the generated tool docs in `README.md`, build), then the smoke tests as Smoke tests says; `npm run smoke:agent` is the agent eval. The smoke tests need the calendar account in `.env`: a session without one, such as a routine, leaves them to the maintainer with `- [ ] before merge: the maintainer runs the smoke tests` under the PR's Deploy.
 - **Ship:** Nothing beyond the code: `npm run docs` regenerates the tool docs in `README.md`.
 - **Release:** A merge to `main` runs semantic-release (`.github/workflows/release.yml`), which computes the version from the commit messages: `feat` releases a minor version, `fix` and `perf` a patch, a breaking change a major one, and `docs`, `test`, `chore`, `style`, `refactor` and `ci` nothing. It publishes the npm package, the MCP Registry entry and the container image on ghcr.io, writes `CHANGELOG.md` and creates the GitHub release. Nobody acts, except that a breaking change publishes a major version, so its PR's Deploy section lists `- [ ] before merge: the maintainer approves the major release`.
 
