@@ -17,7 +17,7 @@ permissions: {}
 
 jobs:
   claude:
-    uses: langmail/factory/.github/workflows/claude.yml@8f8cd65dfda9c6b9a4cbc48fc00cf05ff4e1af08 # v0.2.0
+    uses: langmail/factory/.github/workflows/claude.yml@edaf0d9e5519328e147575dad7dd6bd46fc710ca # v0.3.0
     permissions:
       contents: read
       pull-requests: read
