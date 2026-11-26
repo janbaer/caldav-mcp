@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { hrefFor, toCalendarPath } from "./caldav-href.js";
+import { writableAlarms } from "./reminder.js";
 
 interface CompleteTodoInput {
 	calendarUrl: string;
@@ -40,6 +41,7 @@ export function registerCompleteTodo(client: CalDAVClient, server: McpServer) {
 			// RFC 5545: a COMPLETED VTODO should carry a COMPLETED timestamp.
 			const updated = await client.updateTodo(calendarUrl, {
 				...existing,
+				...(existing.alarms && { alarms: writableAlarms(existing.alarms) }),
 				completed: new Date(),
 				status: "COMPLETED",
 			});

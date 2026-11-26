@@ -276,6 +276,35 @@ async function smokeWholeDayEvents(client: Client, calendarUrl: string) {
 	}
 }
 
+async function todoReminders(
+	client: Client,
+	calendarUrl: string,
+	uid: string
+): Promise<string[]> {
+	const listed = JSON.parse(
+		unwrapText(
+			await client.callTool({
+				arguments: { calendarUrl, status: "ALL" },
+				name: "list-todos",
+			})
+		)
+	) as { todos: Array<{ uid: string; reminders: string[] }> };
+	const found = listed.todos.find((t) => t.uid === uid);
+	if (!found) {
+		throw new Error(`Todo ${uid} not found in list-todos`);
+	}
+	return found.reminders;
+}
+
+function assertReminders(actual: string[], expected: string[], when: string) {
+	const times = (xs: string[]) => xs.map((x) => new Date(x).getTime());
+	if (JSON.stringify(times(actual)) !== JSON.stringify(times(expected))) {
+		throw new Error(
+			`Todo reminders ${when}: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`
+		);
+	}
+}
+
 async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 	// VTODO round-trip: create → list → complete → update → delete on a
 	// task-capable collection. Tasks often live in a separate VTODO calendar;
@@ -288,11 +317,15 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 		log("using todo calendar", todoCalendar.displayName ?? todoCalendarUrl);
 
 		const todoSummary = `caldav-mcp smoke todo ${new Date().toISOString()}`;
+		const reminderAt = new Date(
+			Math.ceil(Date.now() / 60_000) * 60_000 + 23 * 60 * 60 * 1000
+		).toISOString();
 		const todoUid = unwrapText(
 			await client.callTool({
 				arguments: {
 					calendarUrl: todoCalendarUrl,
 					due: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+					reminderAt,
 					summary: todoSummary,
 				},
 				name: "create-todo",
@@ -307,7 +340,14 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 					name: "list-todos",
 				})
 			)
-		) as { todos: Array<{ uid: string; summary: string; status: string }> };
+		) as {
+			todos: Array<{
+				uid: string;
+				summary: string;
+				status: string;
+				reminders: string[];
+			}>;
+		};
 		const foundTodo = listedTodos.todos.find((t) => t.uid === todoUid);
 		if (!foundTodo) {
 			throw new Error(`Created todo ${todoUid} not found in list-todos`);
@@ -317,6 +357,7 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 				`Todo summary mismatch: ${foundTodo.summary} !== ${todoSummary}`
 			);
 		}
+		assertReminders(foundTodo.reminders, [reminderAt], "after create-todo");
 		log("listed todo", { status: foundTodo.status, uid: foundTodo.uid });
 
 		unwrapText(
@@ -353,6 +394,48 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 			})
 		);
 		log("updated todo", todoUid);
+		assertReminders(
+			await todoReminders(client, todoCalendarUrl, todoUid),
+			[reminderAt],
+			"after an update-todo that leaves reminders alone"
+		);
+
+		const movedReminderAt = new Date(
+			new Date(reminderAt).getTime() + 60 * 60 * 1000
+		).toISOString();
+		unwrapText(
+			await client.callTool({
+				arguments: {
+					calendarUrl: todoCalendarUrl,
+					reminderAt: movedReminderAt,
+					uid: todoUid,
+				},
+				name: "update-todo",
+			})
+		);
+		assertReminders(
+			await todoReminders(client, todoCalendarUrl, todoUid),
+			[movedReminderAt],
+			"after moving the reminder"
+		);
+		log("moved todo reminder", movedReminderAt);
+
+		unwrapText(
+			await client.callTool({
+				arguments: {
+					calendarUrl: todoCalendarUrl,
+					reminderAt: null,
+					uid: todoUid,
+				},
+				name: "update-todo",
+			})
+		);
+		assertReminders(
+			await todoReminders(client, todoCalendarUrl, todoUid),
+			[],
+			"after clearing the reminder"
+		);
+		log("cleared todo reminder");
 
 		unwrapText(
 			await client.callTool({

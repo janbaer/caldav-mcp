@@ -51,7 +51,12 @@ function setup(todos: Todo[]) {
 
 function parse(result: { content: { text: string }[] }) {
 	return JSON.parse(result.content[0].text) as {
-		todos: Array<{ uid: string; status: string; due?: string }>;
+		todos: Array<{
+			uid: string;
+			status: string;
+			due?: string;
+			reminders: string[];
+		}>;
 		total: number;
 		limit: number;
 		offset: number;
@@ -201,5 +206,23 @@ describe("listTodosDefinition.inputSchema", () => {
 		for (const bad of ["completed", "open", "all"]) {
 			expect(status.safeParse(bad).success).toBe(false);
 		}
+	});
+
+	it("shows each task's reminder times", async () => {
+		const { handler } = setup([
+			todo({
+				alarms: [{ action: "DISPLAY", trigger: "2026-11-27T08:00:00Z" }],
+				summary: "With reminder",
+				uid: "r",
+			}),
+			todo({ summary: "Without", uid: "n" }),
+		]);
+
+		const out = parse(await handler({ calendarUrl: "/f/tasks/" }));
+
+		expect(out.todos.find((t) => t.uid === "r")?.reminders).toEqual([
+			"2026-11-27T08:00:00.000Z",
+		]);
+		expect(out.todos.find((t) => t.uid === "n")?.reminders).toEqual([]);
 	});
 });

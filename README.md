@@ -249,11 +249,11 @@ Parameters:
 
 Returns:
 
-- An object `{ todos, total, limit, offset }` where `total` is the count before pagination. Each todo has `uid`, `summary`, `status`, and optionally `due`, `start`, `completed`, `description`, `location`.
+- An object `{ todos, total, limit, offset }` where `total` is the count before pagination. Each todo has `uid`, `summary`, `status`, `reminders` (when the task will notify, as ISO datetimes, or as the raw offset such as `-PT15M` for a relative reminder on a task without `start`; empty when it has none), and optionally `due`, `start`, `completed`, `description`, `location`.
 
 ### create-todo
 
-Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin.
+Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin. Use `reminderAt` when the user wants to be reminded ("remind me tomorrow at 9"); a task without it gets no reminder.
 
 Parameters:
 
@@ -261,6 +261,7 @@ Parameters:
 - `description`: string (optional)
 - `due`: string (optional) — Due datetime (ISO 8601)
 - `location`: string (optional)
+- `reminderAt`: string (optional) — When the user's devices should notify about the task: a clock time (ISO 8601 with offset), not an offset from the due date. For "an hour before it's due", pass the due time minus one hour.
 - `start`: string (optional) — Start datetime (ISO 8601)
 - `status`: enum (`NEEDS-ACTION` | `COMPLETED` | `IN-PROCESS` | `CANCELLED`) (optional) — Defaults to NEEDS-ACTION when omitted
 - `summary`: string
@@ -271,7 +272,7 @@ Returns:
 
 ### update-todo
 
-Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. To mark a task done, prefer the `complete-todo` tool.
+Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. `reminderAt` replaces the task's reminders with one at that time, `null` removes all of them, and omitting it keeps them. To mark a task done, prefer the `complete-todo` tool.
 
 Parameters:
 
@@ -279,6 +280,7 @@ Parameters:
 - `description`: string (optional)
 - `due`: string (optional)
 - `location`: string (optional)
+- `reminderAt`: string | null (optional) — When the user's devices should notify about the task: a clock time (ISO 8601 with offset), not an offset from the due date. For "an hour before it's due", pass the due time minus one hour. Replaces all existing reminders; `null` removes them; omit to keep them.
 - `start`: string (optional)
 - `status`: enum (`NEEDS-ACTION` | `COMPLETED` | `IN-PROCESS` | `CANCELLED`) (optional)
 - `summary`: string (optional)

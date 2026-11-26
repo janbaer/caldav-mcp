@@ -10,6 +10,7 @@ type ToolHandler = (params: {
 	start?: string;
 	description?: string;
 	location?: string;
+	reminderAt?: string;
 	status?: "NEEDS-ACTION" | "COMPLETED" | "IN-PROCESS" | "CANCELLED";
 }) => Promise<{ content: { type: string; text: string }[] }>;
 
@@ -70,6 +71,7 @@ describe("registerCreateTodo", () => {
 		expect(passed).not.toHaveProperty("status");
 		expect(passed).not.toHaveProperty("description");
 		expect(passed).not.toHaveProperty("location");
+		expect(passed).not.toHaveProperty("alarms");
 	});
 
 	it("passes status when provided", async () => {
@@ -83,5 +85,38 @@ describe("registerCreateTodo", () => {
 
 		const passed = mockClient.createTodo.mock.calls[0]?.[1];
 		expect(passed?.status).toBe("IN-PROCESS");
+	});
+
+	it("adds one display alarm at reminderAt, described by the summary", async () => {
+		const { mockClient, handler } = setup();
+
+		await handler({
+			calendarUrl: "/f/tasks/",
+			reminderAt: "2026-11-27T09:00:00+01:00",
+			summary: "Call the plumber",
+		});
+
+		const passed = mockClient.createTodo.mock.calls[0]?.[1];
+		expect(passed?.alarms).toHaveLength(1);
+		expect(passed?.alarms[0]).toMatchObject({
+			action: "DISPLAY",
+			description: "Call the plumber",
+		});
+		expect(typeof passed?.alarms[0].trigger).not.toBe("string");
+		expect(String(passed?.alarms[0].trigger)).toBe("2026-11-27T08:00:00Z");
+	});
+
+	it("adds no alarm for a due date alone", async () => {
+		const { mockClient, handler } = setup();
+
+		await handler({
+			calendarUrl: "/f/tasks/",
+			due: "2026-11-27T17:00:00Z",
+			summary: "Call the plumber",
+		});
+
+		expect(mockClient.createTodo.mock.calls[0]?.[1]).not.toHaveProperty(
+			"alarms"
+		);
 	});
 });

@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
+import { reminderAlarm } from "./reminder.js";
 import type { TodoStatus } from "./todo-status.js";
 import { todoStatusSchema } from "./todo-status.js";
 
@@ -10,6 +11,7 @@ interface CreateTodoInput {
 	description?: string | undefined;
 	due?: string | undefined;
 	location?: string | undefined;
+	reminderAt?: string | undefined;
 	start?: string | undefined;
 	status?: TodoStatus | undefined;
 	summary: string;
@@ -17,7 +19,7 @@ interface CreateTodoInput {
 
 export const createTodoDefinition = {
 	description:
-		"Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin.",
+		'Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin. Use `reminderAt` when the user wants to be reminded ("remind me tomorrow at 9"); a task without it gets no reminder.',
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
@@ -27,6 +29,13 @@ export const createTodoDefinition = {
 			.optional()
 			.describe("Due datetime (ISO 8601)"),
 		location: z.string().optional(),
+		reminderAt: z
+			.string()
+			.datetime({ offset: true })
+			.optional()
+			.describe(
+				"When the user's devices should notify about the task: a clock time (ISO 8601 with offset), not an offset from the due date. For \"an hour before it's due\", pass the due time minus one hour."
+			),
 		start: z
 			.string()
 			.datetime({ offset: true })
@@ -49,7 +58,8 @@ export function registerCreateTodo(client: CalDAVClient, server: McpServer) {
 			inputSchema: createTodoDefinition.inputSchema,
 		},
 		async (args: CreateTodoInput) => {
-			const { summary, due, start, description, location, status } = args;
+			const { summary, due, start, description, location, reminderAt, status } =
+				args;
 			const calendarUrl = toCalendarPath(args.calendarUrl, client.baseUrl);
 			const todo = await client.createTodo(calendarUrl, {
 				summary,
@@ -58,6 +68,9 @@ export function registerCreateTodo(client: CalDAVClient, server: McpServer) {
 				...(description !== undefined && { description }),
 				...(location !== undefined && { location }),
 				...(status !== undefined && { status }),
+				...(reminderAt !== undefined && {
+					alarms: [reminderAlarm(reminderAt, summary)],
+				}),
 			});
 
 			return {
