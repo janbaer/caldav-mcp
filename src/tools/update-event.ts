@@ -9,6 +9,7 @@ import {
 	readScheduling,
 	toCalAddress,
 } from "./calendar-address.js";
+import { isoDateTime } from "./iso-datetime.js";
 import type { RecurrenceRuleInput } from "./recurrence-rule.js";
 import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
 import { carryOverWholeDayDates, toWholeDayDate } from "./whole-day-date.js";
@@ -33,7 +34,7 @@ export const updateEventDefinition = {
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		end: z.string().datetime({ offset: true }).optional(),
+		end: isoDateTime("New end datetime").optional(),
 		location: z.string().optional(),
 		organizer: emailAddressOrEmptySchema
 			.optional()
@@ -41,7 +42,7 @@ export const updateEventDefinition = {
 				"Organizer email (no mailto:); pass to set or change ORGANIZER, or an empty string to remove it (only when the event has no attendees). Omit to leave it as stored."
 			),
 		recurrenceRule: recurrenceRuleSchema.optional(),
-		start: z.string().datetime({ offset: true }).optional(),
+		start: isoDateTime("New start datetime").optional(),
 		attendees: z
 			.array(emailAddressSchema)
 			.optional()

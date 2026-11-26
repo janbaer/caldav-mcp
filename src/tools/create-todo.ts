@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
+import { isoDateTime } from "./iso-datetime.js";
 import { reminderAlarm } from "./reminder.js";
 import type { TodoStatus } from "./todo-status.js";
 import { todoStatusSchema } from "./todo-status.js";
@@ -23,24 +24,12 @@ export const createTodoDefinition = {
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		due: z
-			.string()
-			.datetime({ offset: true })
-			.optional()
-			.describe("Due datetime (ISO 8601)"),
+		due: isoDateTime("Due datetime").optional(),
 		location: z.string().optional(),
-		reminderAt: z
-			.string()
-			.datetime({ offset: true })
-			.optional()
-			.describe(
-				"When the user's devices should notify about the task: a clock time (ISO 8601 with offset), not an offset from the due date. For \"an hour before it's due\", pass the due time minus one hour."
-			),
-		start: z
-			.string()
-			.datetime({ offset: true })
-			.optional()
-			.describe("Start datetime (ISO 8601)"),
+		reminderAt: isoDateTime(
+			"When the user's devices should notify about the task: a clock time, not an offset from the due date. For \"an hour before it's due\", pass the due time minus one hour"
+		).optional(),
+		start: isoDateTime("Start datetime").optional(),
 		status: todoStatusSchema
 			.optional()
 			.describe("Defaults to NEEDS-ACTION when omitted"),

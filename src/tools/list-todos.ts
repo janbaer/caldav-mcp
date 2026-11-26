@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient, Todo } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
+import { isoDateTime } from "./iso-datetime.js";
 import { reminderTimes } from "./reminder.js";
 import type { TodoStatus } from "./todo-status.js";
 import { todoStatusSchema } from "./todo-status.js";
@@ -58,20 +59,12 @@ export const listTodosDefinition = {
 		"List tasks (VTODOs) in the calendar specified by its URL. By default returns only open tasks (NEEDS-ACTION and IN-PROCESS), sorted by manual order then due date. Use `status` to include completed (`COMPLETED`) or all (`ALL`) tasks, and `limit`/`offset` to page through long lists.",
 	inputSchema: {
 		calendarUrl: z.string(),
-		due_after: z
-			.string()
-			.datetime({ offset: true })
-			.optional()
-			.describe(
-				"Only tasks with a due date at or after this (ISO 8601). Undated tasks are excluded when a due window is set."
-			),
-		due_before: z
-			.string()
-			.datetime({ offset: true })
-			.optional()
-			.describe(
-				"Only tasks with a due date at or before this (ISO 8601). Undated tasks are excluded when a due window is set."
-			),
+		due_after: isoDateTime(
+			"Only tasks with a due date at or after this; undated tasks are excluded when a due window is set"
+		).optional(),
+		due_before: isoDateTime(
+			"Only tasks with a due date at or before this; undated tasks are excluded when a due window is set"
+		).optional(),
 		limit: z
 			.number()
 			.int()
