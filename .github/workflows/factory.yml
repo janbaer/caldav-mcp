@@ -11,10 +11,10 @@ permissions:
   contents: read
 jobs:
   skills:
-    uses: langmail/factory/.github/workflows/skills-check.yml@e055871ce76db8aee6b7c3ac9030c91a90a51602 # v0.5.0
+    uses: langmail/factory/.github/workflows/skills-check.yml@b1b36dcbf1e05ddcc9fabd3a13f535c4f8b21c71 # v0.6.0
   labels:
     if: github.event_name == 'push'
-    uses: langmail/factory/.github/workflows/labels.yml@e055871ce76db8aee6b7c3ac9030c91a90a51602 # v0.5.0
+    uses: langmail/factory/.github/workflows/labels.yml@b1b36dcbf1e05ddcc9fabd3a13f535c4f8b21c71 # v0.6.0
     # contents: write because GitHub drops issue type changes from a token
     # without push access.
     permissions:

@@ -37,9 +37,20 @@ When a GitHub issue event started the run (a `<github-trigger-context>`
 message names the issue), take that issue as if given its number, and only
 when it passes the queue checks below (open, unassigned, no open PR closes
 it, no open issue blocks it); otherwise stop without a comment or change, and
-don't pick another issue, since the scheduled run works the queue. In step 2,
-a missing brief or a human reply after it means triage isn't done with the
-issue: stop instead of running triage.
+don't pick another issue, since the scheduled run works the queue. When the
+event closed the issue as completed (its `state_reason` is `completed`; on
+any other close, stop as above), take instead the first of the issues it was
+blocking that is `ready-for-agent` and passes those checks, in the queue's
+order below, so an unblocked issue doesn't wait for the next scheduled run:
+
+```bash
+gh api repos/<owner>/<repo>/issues/<N>/dependencies/blocking --jq '.[]
+  | select(.state == "open" and (.repository_url | endswith("/<owner>/<repo>")))
+  | {number, labels: [.labels[].name]}'
+```
+
+In step 2, a missing brief or a human reply after it means triage isn't done
+with the issue: stop instead of running triage.
 
 Given an issue number, take that issue. Otherwise take the open, unassigned
 `ready-for-agent` issue that no open PR closes and no open issue blocks,
