@@ -1,3 +1,9 @@
+## [0.13.1](https://github.com/langmail/caldav-mcp/compare/v0.13.0...v0.13.1) (2026-11-26)
+
+### Bug Fixes
+
+* drop regex patterns from tool input schemas ([#193](https://github.com/langmail/caldav-mcp/issues/193)) ([9412108](https://github.com/langmail/caldav-mcp/commit/9412108e5d7229e08d1688a8c6569eecc4fe2411)), closes [#171](https://github.com/langmail/caldav-mcp/issues/171)
+
 # [0.13.0](https://github.com/langmail/caldav-mcp/compare/v0.12.1...v0.13.0) (2026-11-26)
 
 ### Features
