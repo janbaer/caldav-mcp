@@ -2,28 +2,42 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { hrefFor, toCalendarPath } from "./caldav-href.js";
-import { type TodoStatus, todoStatusSchema } from "./todo-status.js";
+import { isoDateTime } from "./iso-datetime.js";
+import { updatedAlarms } from "./reminder.js";
+import type { TodoStatus } from "./todo-status.js";
+import { todoStatusSchema } from "./todo-status.js";
 
 interface UpdateTodoInput {
 	calendarUrl: string;
 	description?: string | undefined;
 	due?: string | undefined;
 	location?: string | undefined;
+	reminderAt?: string | null | undefined;
 	start?: string | undefined;
 	status?: TodoStatus | undefined;
 	summary?: string | undefined;
 	uid: string;
 }
 
+// `.nullable()` wraps the schema, so the description is set again on the
+// wrapper for clients and the generated docs to see it.
+const reminderAtSchema = isoDateTime(
+	"When the user's devices should notify about the task: a clock time, not an offset from the due date. For \"an hour before it's due\", pass the due time minus one hour. Replaces all existing reminders; `null` removes them; omit to keep them"
+);
+
 export const updateTodoDefinition = {
 	description:
-		"Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. To mark a task done, prefer the `complete-todo` tool.",
+		"Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. `reminderAt` replaces the task's reminders with one at that time, `null` removes all of them, and omitting it keeps them. To mark a task done, prefer the `complete-todo` tool.",
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		due: z.string().datetime({ offset: true }).optional(),
+		due: isoDateTime("New due datetime").optional(),
 		location: z.string().optional(),
-		start: z.string().datetime({ offset: true }).optional(),
+		reminderAt: reminderAtSchema
+			.nullable()
+			.optional()
+			.describe(reminderAtSchema.description ?? ""),
+		start: isoDateTime("New start datetime").optional(),
 		status: todoStatusSchema.optional(),
 		summary: z.string().optional(),
 		uid: z
@@ -42,7 +56,16 @@ export function registerUpdateTodo(client: CalDAVClient, server: McpServer) {
 			inputSchema: updateTodoDefinition.inputSchema,
 		},
 		async (args: UpdateTodoInput) => {
-			const { uid, summary, due, start, description, location, status } = args;
+			const {
+				uid,
+				summary,
+				due,
+				start,
+				description,
+				location,
+				reminderAt,
+				status,
+			} = args;
 			const calendarUrl = toCalendarPath(args.calendarUrl, client.baseUrl);
 
 			const href = hrefFor(calendarUrl, uid);
@@ -66,6 +89,11 @@ export function registerUpdateTodo(client: CalDAVClient, server: McpServer) {
 				completed = priorCompleted ?? new Date();
 			}
 
+			const alarms = updatedAlarms(base.alarms, reminderAt, {
+				after: summary ?? base.summary,
+				before: base.summary,
+			});
+
 			const updated = await client.updateTodo(calendarUrl, {
 				...base,
 				...(summary !== undefined && { summary }),
@@ -75,6 +103,7 @@ export function registerUpdateTodo(client: CalDAVClient, server: McpServer) {
 				...(location !== undefined && { location }),
 				...(status !== undefined && { status }),
 				...(completed !== undefined && { completed }),
+				...(alarms !== undefined && { alarms }),
 			});
 
 			return {

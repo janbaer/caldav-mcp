@@ -70,6 +70,9 @@ function describeType(schema: z.ZodTypeAny): string {
 	if (schema instanceof z.ZodObject) {
 		return "object";
 	}
+	if (schema instanceof z.ZodNullable) {
+		return `${describeType(schema.unwrap() as z.ZodTypeAny)} | null`;
+	}
 	return "value";
 }
 
@@ -103,6 +106,7 @@ function renderTool(tool: ToolDefinition): string {
 		lines.push("Parameters: none");
 	} else {
 		lines.push("Parameters:");
+		lines.push("");
 		for (const [name, schema] of entries) {
 			lines.push(renderField(name, schema));
 		}
@@ -110,6 +114,7 @@ function renderTool(tool: ToolDefinition): string {
 	if (tool.returns) {
 		lines.push("");
 		lines.push("Returns:");
+		lines.push("");
 		lines.push(`- ${tool.returns}`);
 	}
 	return lines.join("\n");
@@ -128,13 +133,14 @@ function updateReadme(readmePath: string, body: string): string {
 		);
 	}
 	const pattern = new RegExp(
-		`${escapeRegex(START)}[\\s\\S]*?${escapeRegex(END)}`
+		`${escapeRegex(START)}[\\s\\S]*?${escapeRegex(END)}`,
+		"u"
 	);
 	return current.replace(pattern, block);
 }
 
 function escapeRegex(s: string): string {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return s.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function main() {

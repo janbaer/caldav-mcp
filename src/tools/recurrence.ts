@@ -18,7 +18,8 @@ import type { Event, RecurrenceRule } from "ts-caldav";
  */
 
 /** Stops a rule that never terminates. */
-const WALL_CLOCK = /^(\d{4})-?(\d{2})-?(\d{2})(?:T(\d{2}):?(\d{2}):?(\d{2}))?/;
+const WALL_CLOCK =
+	/^(?<y>\d{4})-?(?<mo>\d{2})-?(?<d>\d{2})(?:T(?<h>\d{2}):?(?<mi>\d{2}):?(?<s>\d{2}))?/u;
 const MAX_STEPS = 100_000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -169,11 +170,11 @@ export function toOccurrenceKey(
 	value: string,
 	isDate: boolean
 ): string | undefined {
-	const m = value.trim().match(WALL_CLOCK);
-	if (!m) {
+	const groups = value.trim().match(WALL_CLOCK)?.groups;
+	if (!groups) {
 		return undefined;
 	}
-	const [, y, mo, d, h = "00", mi = "00", s = "00"] = m;
+	const { y, mo, d, h = "00", mi = "00", s = "00" } = groups;
 	return isDate ? `${y}-${mo}-${d}` : `${y}-${mo}-${d}T${h}:${mi}:${s}`;
 }
 

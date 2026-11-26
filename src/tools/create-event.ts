@@ -3,17 +3,22 @@ import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
 import {
-	type RecurrenceRuleInput,
-	recurrenceRuleSchema,
-	toRecurrenceRule,
-} from "./recurrence-rule.js";
+	assertOrganizerForAttendees,
+	emailAddressSchema,
+	toCalAddress,
+} from "./calendar-address.js";
+import { isoDateTime } from "./iso-datetime.js";
+import type { RecurrenceRuleInput } from "./recurrence-rule.js";
+import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
 import { toWholeDayDate } from "./whole-day-date.js";
 
 interface CreateEventInput {
+	attendees?: string[] | undefined;
 	calendarUrl: string;
 	description?: string | undefined;
 	end: string;
 	location?: string | undefined;
+	organizer?: string | undefined;
 	recurrenceRule?: RecurrenceRuleInput | undefined;
 	start: string;
 	summary: string;
@@ -26,16 +31,21 @@ export const createEventDefinition = {
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		end: z
-			.string()
-			.datetime({ offset: true })
-			.describe("End datetime (ISO 8601)"),
+		end: isoDateTime("End datetime"),
 		location: z.string().optional(),
+		organizer: emailAddressSchema
+			.optional()
+			.describe(
+				"Organizer email (no mailto:), written as ORGANIZER; a scheduling-capable server (e.g. Radicale with the email/iMIP hook) uses it to send invitations, updates and cancellations to the attendees."
+			),
 		recurrenceRule: recurrenceRuleSchema.optional(),
-		start: z
-			.string()
-			.datetime({ offset: true })
-			.describe("Start datetime (ISO 8601)"),
+		start: isoDateTime("Start datetime"),
+		attendees: z
+			.array(emailAddressSchema)
+			.optional()
+			.describe(
+				"Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Requires organizer."
+			),
 		summary: z.string(),
 		wholeDay: z.boolean().optional().describe("Create as a whole-day event"),
 	},
@@ -59,8 +69,20 @@ export function registerCreateEvent(client: CalDAVClient, server: McpServer) {
 				description,
 				location,
 				recurrenceRule,
+				organizer,
+				attendees,
 			} = args;
 			const calendarUrl = toCalendarPath(args.calendarUrl, client.baseUrl);
+			assertOrganizerForAttendees(organizer, attendees ?? []);
+			// organizer/attendees go through ts-caldav's customFields, which it
+			// writes as plain ICS properties.
+			const customFields: Record<string, string | string[]> = {};
+			if (organizer) {
+				customFields.organizer = toCalAddress(organizer);
+			}
+			if (attendees?.length) {
+				customFields.attendee = attendees.map(toCalAddress);
+			}
 			const event = await client.createEvent(calendarUrl, {
 				end: wholeDay ? toWholeDayDate(end) : new Date(end),
 				start: wholeDay ? toWholeDayDate(start) : new Date(start),
@@ -71,6 +93,7 @@ export function registerCreateEvent(client: CalDAVClient, server: McpServer) {
 				...(recurrenceRule !== undefined && {
 					recurrenceRule: toRecurrenceRule(recurrenceRule, wholeDay),
 				}),
+				...(Object.keys(customFields).length > 0 && { customFields }),
 			});
 
 			return {

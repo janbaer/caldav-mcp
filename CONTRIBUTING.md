@@ -4,10 +4,11 @@ Thank you for contributing to caldav-mcp! This guide will help you get started.
 
 ## Development Setup
 
-1. **Prerequisites**: Node.js >= 18.0.0, npm >= 9.0.0, [gitleaks](https://github.com/gitleaks/gitleaks) (used by the pre-commit hook; `brew install gitleaks`)
+1. **Prerequisites**: Node.js >= 18.0.0, npm >= 9.0.0, [gitleaks](https://github.com/gitleaks/gitleaks) (recommended: the pre-commit hook scans for secrets with it and skips that scan if it is missing; `brew install gitleaks`)
 2. **Clone and install**:
+
    ```bash
-   git clone https://github.com/dominik1001/caldav-mcp.git
+   git clone https://github.com/langmail/caldav-mcp.git
    cd caldav-mcp
    npm install
    ```
@@ -18,6 +19,7 @@ Thank you for contributing to caldav-mcp! This guide will help you get started.
 ## Development Workflow
 
 ### Making Changes
+
 1. Create a feature branch from a freshly fetched `main`: `git fetch && git switch --no-track -c feat/your-feature origin/main`
 2. Make changes in `src/`
 3. Write/update tests in `src/tools/*.test.ts`
@@ -25,11 +27,13 @@ Thank you for contributing to caldav-mcp! This guide will help you get started.
 5. Commit with conventional format (see below)
 
 ### Running Tests
+
 - `npm test` - Run all tests
 - `npm run test:watch` - Watch mode for TDD
 - `npm run test:coverage` - Check coverage (aim for >70%)
 
 ### Code Quality
+
 - Pre-commit hooks automatically run Biome checks and tests
 - Use `npm run check` to check for issues
 - Use `npm run check:fix` to auto-fix issues
@@ -49,6 +53,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) for automate
 - `BREAKING CHANGE:` - Breaking changes (major version bump)
 
 **Examples:**
+
 ```
 feat: add support for recurring events
 fix: handle HTTP 204 in delete-event
@@ -75,6 +80,7 @@ test: add tests for create-event tool
 - **Follow existing patterns**: See `list-events.test.ts` and `delete-event.test.ts`
 
 **Example test structure:**
+
 ```typescript
 import { describe, test, expect, vi } from "vitest";
 import { CalDAVClient } from "ts-caldav";
@@ -120,8 +126,8 @@ Releases are fully automated via semantic-release:
 
 ## Questions or Issues?
 
-- **Bug reports**: [GitHub Issues](https://github.com/dominik1001/caldav-mcp/issues)
-- **Questions**: [GitHub Discussions](https://github.com/dominik1001/caldav-mcp/discussions)
+- **Bug reports**: [GitHub Issues](https://github.com/langmail/caldav-mcp/issues)
+- **Questions**: [GitHub Discussions](https://github.com/langmail/caldav-mcp/discussions)
 - **Security issues**: See [SECURITY.md](SECURITY.md)
 
 Thank you for contributing! 🎉

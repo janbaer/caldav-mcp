@@ -1,5 +1,5 @@
 import type { Event } from "ts-caldav";
-import { describe, expect, test } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
 	expandEvents,
 	occurrencesWithin,
@@ -21,7 +21,7 @@ function makeEvent(overrides: Partial<Event> & Pick<Event, "start">): Event {
 const iso = (dates: Date[]) => dates.map((d) => d.toISOString());
 
 describe("occurrencesWithin", () => {
-	test("returns a single event only when it falls inside the window", () => {
+	it("returns a single event only when it falls inside the window", () => {
 		const event = makeEvent({ start: new Date("2026-08-17T12:30:00Z") });
 		expect(
 			iso(
@@ -41,7 +41,7 @@ describe("occurrencesWithin", () => {
 		).toEqual([]);
 	});
 
-	test("expands a weekly series that started years earlier", () => {
+	it("expands a weekly series that started years earlier", () => {
 		// The master DTSTART lies in 2024; a query for 2026 must not echo it back.
 		const event = makeEvent({
 			recurrenceRule: { byday: ["TU", "TH"], freq: "WEEKLY" },
@@ -58,7 +58,7 @@ describe("occurrencesWithin", () => {
 		).toEqual(["2026-08-18T12:00:00.000Z", "2026-08-20T12:00:00.000Z"]);
 	});
 
-	test("keeps the local clock time across a daylight saving change", () => {
+	it("keeps the local clock time across a daylight saving change", () => {
 		// 14:00 in Berlin is 12:00Z in summer but 13:00Z in winter.
 		const event = makeEvent({
 			recurrenceRule: { byday: ["TU", "TH"], freq: "WEEKLY" },
@@ -75,7 +75,7 @@ describe("occurrencesWithin", () => {
 		).toEqual(["2026-12-22T13:00:00.000Z", "2026-12-24T13:00:00.000Z"]);
 	});
 
-	test("honours INTERVAL and UNTIL", () => {
+	it("honours INTERVAL and UNTIL", () => {
 		const event = makeEvent({
 			recurrenceRule: {
 				byday: ["FR"],
@@ -104,7 +104,7 @@ describe("occurrencesWithin", () => {
 		).toEqual([]);
 	});
 
-	test("drops occurrences listed in EXDATE", () => {
+	it("drops occurrences listed in EXDATE", () => {
 		const event = makeEvent({
 			customFields: { exdate: "20260818T140000" },
 			recurrenceRule: { byday: ["TU", "TH"], freq: "WEEKLY" },
@@ -121,7 +121,7 @@ describe("occurrencesWithin", () => {
 		).toEqual(["2026-08-20T12:00:00.000Z"]);
 	});
 
-	test("keeps a yearly whole-day event on its own date", () => {
+	it("keeps a yearly whole-day event on its own date", () => {
 		// A DTSTART;VALUE=DATE arrives from ical.js as *local* midnight and
 		// carries no TZID, so reading it as UTC would move the birthday a day.
 		const birthday = makeEvent({
@@ -140,7 +140,7 @@ describe("occurrencesWithin", () => {
 		).toEqual([new Date(2026, 6, 5).toISOString()]);
 	});
 
-	test("falls back to the master when the rule carries no FREQ", () => {
+	it("falls back to the master when the rule carries no FREQ", () => {
 		const event = makeEvent({
 			recurrenceRule: { byday: ["TU"] },
 			start: new Date("2026-08-18T12:00:00Z"),
@@ -158,13 +158,13 @@ describe("occurrencesWithin", () => {
 });
 
 describe("toOccurrenceKey", () => {
-	test("accepts the shape ts-caldav hands over", () => {
+	it("accepts the shape ts-caldav hands over", () => {
 		expect(toOccurrenceKey("2026-08-21T14:30:00", false)).toBe(
 			"2026-08-21T14:30:00"
 		);
 	});
 
-	test("accepts the bare iCalendar form", () => {
+	it("accepts the bare iCalendar form", () => {
 		expect(toOccurrenceKey("20260821T143000", false)).toBe(
 			"2026-08-21T14:30:00"
 		);
@@ -173,18 +173,18 @@ describe("toOccurrenceKey", () => {
 		);
 	});
 
-	test("reduces to the day for a whole-day series", () => {
+	it("reduces to the day for a whole-day series", () => {
 		expect(toOccurrenceKey("2026-08-21T00:00:00", true)).toBe("2026-08-21");
 		expect(toOccurrenceKey("20260821", true)).toBe("2026-08-21");
 	});
 
-	test("returns nothing for something unparseable", () => {
+	it("returns nothing for something unparseable", () => {
 		expect(toOccurrenceKey("next tuesday", false)).toBeUndefined();
 	});
 });
 
 describe("occurrencesWithin robustness", () => {
-	test("skips the slot an override stands in for", () => {
+	it("skips the slot an override stands in for", () => {
 		// The master recurs every Friday at 14:30 Berlin time.
 		const master = makeEvent({
 			recurrenceRule: { byday: ["FR"], freq: "WEEKLY" },
@@ -203,7 +203,7 @@ describe("occurrencesWithin robustness", () => {
 		).toEqual([]);
 	});
 
-	test("reaches a present-day window from a series that began decades ago", () => {
+	it("reaches a present-day window from a series that began decades ago", () => {
 		const ancient = makeEvent({
 			recurrenceRule: { freq: "DAILY" },
 			start: new Date("1990-01-01T09:00:00Z"),
@@ -216,7 +216,7 @@ describe("occurrencesWithin robustness", () => {
 		expect(hits).toHaveLength(3);
 	});
 
-	test("survives a time zone identifier that Intl rejects", () => {
+	it("survives a time zone identifier that Intl rejects", () => {
 		// Exchange and older clients emit Windows zone names.
 		const exchange = makeEvent({
 			recurrenceRule: { byday: ["FR"], freq: "WEEKLY" },
@@ -237,7 +237,7 @@ describe("seeding near the window", () => {
 	// The seed jump skips whole periods. If it landed on the wrong phase, an
 	// interval series would come back on the wrong days rather than not at all,
 	// so these pin the dates and not just the count.
-	test("keeps the phase of a four-weekly series across decades", () => {
+	it("keeps the phase of a four-weekly series across decades", () => {
 		const event = makeEvent({
 			recurrenceRule: { byday: ["FR"], freq: "WEEKLY", interval: 4 },
 			start: new Date("1990-01-05T12:30:00Z"), // a Friday
@@ -264,7 +264,7 @@ describe("seeding near the window", () => {
 		).toEqual([]);
 	});
 
-	test("does not skip ahead of a series bounded by COUNT", () => {
+	it("does not skip ahead of a series bounded by COUNT", () => {
 		const event = makeEvent({
 			recurrenceRule: { count: 3, freq: "DAILY" },
 			start: new Date("2026-08-03T12:30:00Z"),
@@ -287,7 +287,7 @@ describe("seeding near the window", () => {
 		).toHaveLength(3);
 	});
 
-	test("accepts the numeric WKST that ts-caldav hands over", () => {
+	it("accepts the numeric WKST that ts-caldav hands over", () => {
 		const event = makeEvent({
 			recurrenceRule: {
 				byday: ["FR"],
@@ -325,25 +325,25 @@ describe("expandEvents", () => {
 		new Date("2026-08-23T22:00:00Z"),
 	];
 
-	test("reports a moved occurrence once, at its new time", () => {
+	it("reports a moved occurrence once, at its new time", () => {
 		const out = expandEvents([master, override], ...window);
 		expect(iso(out.map((o) => o.start))).toEqual(["2026-08-21T15:00:00.000Z"]);
 	});
 
-	test("identifies a replacement by the slot it stands in for", () => {
+	it("identifies a replacement by the slot it stands in for", () => {
 		const [only] = expandEvents([master, override], ...window);
 		expect(only?.key).toBe("2026-08-21T14:30:00");
 		expect(only?.fromSeries).toBe(true);
 	});
 
-	test("gives a plain event its own slot as key", () => {
+	it("gives a plain event its own slot as key", () => {
 		const plain = makeEvent({ start: new Date("2026-08-18T09:00:00Z") });
 		const [only] = expandEvents([plain], ...window);
 		expect(only?.key).toBe("2026-08-18T11:00:00");
 		expect(only?.fromSeries).toBe(false);
 	});
 
-	test("returns occurrences oldest first across events", () => {
+	it("returns occurrences oldest first across events", () => {
 		const other = makeEvent({
 			start: new Date("2026-08-17T08:00:00Z"),
 			uid: "other",
@@ -357,7 +357,7 @@ describe("expandEvents", () => {
 });
 
 describe("expandEvents with malformed input", () => {
-	test("does not treat an event with its own rule as a replacement", () => {
+	it("does not treat an event with its own rule as a replacement", () => {
 		// RFC 5545 forbids the combination, but the point of this module is
 		// surviving what a server actually sends. Honouring the RECURRENCE-ID
 		// here would stamp every expanded occurrence with the same key.
@@ -377,7 +377,7 @@ describe("expandEvents with malformed input", () => {
 });
 
 describe("occurrences that started before the window", () => {
-	test("keeps a one-off event that is still running when the window opens", () => {
+	it("keeps a one-off event that is still running when the window opens", () => {
 		const event = makeEvent({
 			end: new Date("2026-08-22T09:00:00Z"),
 			start: new Date("2026-08-20T09:00:00Z"),
@@ -393,7 +393,7 @@ describe("occurrences that started before the window", () => {
 		).toEqual(["2026-08-20T09:00:00.000Z"]);
 	});
 
-	test("keeps a series occurrence that is still running when the window opens", () => {
+	it("keeps a series occurrence that is still running when the window opens", () => {
 		const event = makeEvent({
 			end: new Date("2026-08-03T09:00:00Z"),
 			recurrenceRule: { freq: "WEEKLY" },
@@ -419,7 +419,7 @@ describe("occurrences that started before the window", () => {
 		).toEqual(["2026-08-15T09:00:00.000Z"]);
 	});
 
-	test("reaches back past one period when the event is longer than the period", () => {
+	it("reaches back past one period when the event is longer than the period", () => {
 		const event = makeEvent({
 			end: new Date("2026-08-04T09:00:00Z"),
 			recurrenceRule: { freq: "DAILY" },

@@ -1,3 +1,83 @@
+## [0.13.2](https://github.com/langmail/caldav-mcp/compare/v0.13.1...v0.13.2) (2026-11-26)
+
+### Bug Fixes
+
+* **update-event:** keep alarms with an absolute trigger time ([#194](https://github.com/langmail/caldav-mcp/issues/194)) ([d5ba6b2](https://github.com/langmail/caldav-mcp/commit/d5ba6b27ef9895a549885f023ac707cf0703b456)), closes [#191](https://github.com/langmail/caldav-mcp/issues/191)
+
+## [0.13.1](https://github.com/langmail/caldav-mcp/compare/v0.13.0...v0.13.1) (2026-11-26)
+
+### Bug Fixes
+
+* drop regex patterns from tool input schemas ([#193](https://github.com/langmail/caldav-mcp/issues/193)) ([9412108](https://github.com/langmail/caldav-mcp/commit/9412108e5d7229e08d1688a8c6569eecc4fe2411)), closes [#171](https://github.com/langmail/caldav-mcp/issues/171)
+
+# [0.13.0](https://github.com/langmail/caldav-mcp/compare/v0.12.1...v0.13.0) (2026-11-26)
+
+### Features
+
+* set, move and clear reminders on tasks ([#195](https://github.com/langmail/caldav-mcp/issues/195)) ([497ed59](https://github.com/langmail/caldav-mcp/commit/497ed59785ea3c8cb647114e7c4a56928d12a958)), closes [#192](https://github.com/langmail/caldav-mcp/issues/192) [#170](https://github.com/langmail/caldav-mcp/issues/170)
+
+## [0.12.1](https://github.com/langmail/caldav-mcp/compare/v0.12.0...v0.12.1) (2026-11-23)
+
+### Bug Fixes
+
+* **tools:** validate organizer and attendees, and show them in list-events ([#182](https://github.com/langmail/caldav-mcp/issues/182)) ([088fb66](https://github.com/langmail/caldav-mcp/commit/088fb66b4d8f9c4bef1ae18793cf0fec2debec8f))
+
+# [0.12.0](https://github.com/langmail/caldav-mcp/compare/v0.11.4...v0.12.0) (2026-11-23)
+
+### Features
+
+* add organizer and attendees to create-event and update-event ([#176](https://github.com/langmail/caldav-mcp/issues/176)) ([27c63ae](https://github.com/langmail/caldav-mcp/commit/27c63aee524012b970586ad1b571a1735ebeaa14))
+
+## [0.11.4](https://github.com/langmail/caldav-mcp/compare/v0.11.3...v0.11.4) (2026-11-23)
+
+### Bug Fixes
+
+* **ci:** run the release job on Node 26 for semantic-release 26 ([#180](https://github.com/langmail/caldav-mcp/issues/180)) ([342ec8d](https://github.com/langmail/caldav-mcp/commit/342ec8df3a2786f009ef805f2c77fd0d60c858fd)), closes [#178](https://github.com/langmail/caldav-mcp/issues/178)
+
+## [0.11.3](https://github.com/langmail/caldav-mcp/compare/v0.11.2...v0.11.3) (2026-11-19)
+
+
+### Bug Fixes
+
+* **ci:** wait for the npm version before publishing to the MCP Registry ([#175](https://github.com/langmail/caldav-mcp/issues/175)) ([763453d](https://github.com/langmail/caldav-mcp/commit/763453dcf5b2a1a0cae73702f196b0bb1150b3c5))
+
+## [0.11.2](https://github.com/langmail/caldav-mcp/compare/v0.11.1...v0.11.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* point package and registry metadata at langmail/caldav-mcp ([#174](https://github.com/langmail/caldav-mcp/issues/174)) ([562c4bf](https://github.com/langmail/caldav-mcp/commit/562c4bf277c14473ba1a4f47285795c2d8104268))
+
+## [0.11.1](https://github.com/dominik1001/caldav-mcp/compare/v0.11.0...v0.11.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* answer HEAD /health and pin concurrent results in tests ([95c3ff7](https://github.com/dominik1001/caldav-mcp/commit/95c3ff706827cff35c91a3586b959af7a7f8464e))
+* fall back to the error code for causes without a message ([ec5aedc](https://github.com/dominik1001/caldav-mcp/commit/ec5aedcb165a67a1a8043466168acaed0224e633))
+* keep the error cause in the one-line startup message ([5ec4624](https://github.com/dominik1001/caldav-mcp/commit/5ec46246c3160548bf9aefcddba8709a0a81b1bc))
+* report startup errors in one line and shut down on Node <18.2 ([f9d82ea](https://github.com/dominik1001/caldav-mcp/commit/f9d82ea4ee8f81abde061ac2ac0784bd3a1d9745))
+
+# [0.11.0](https://github.com/dominik1001/caldav-mcp/compare/v0.10.3...v0.11.0) (2026-11-18)
+
+
+### Bug Fixes
+
+* answer unparseable request targets with 400 instead of crashing ([f46c509](https://github.com/dominik1001/caldav-mcp/commit/f46c509d182c29a27ad9c1acd6208162cecfcb5c))
+* **deps:** regenerate package-lock.json with npm 10 for CI compatibility ([babfe90](https://github.com/dominik1001/caldav-mcp/commit/babfe9072cc5aa492f3c8e15f76d41054ad535dc))
+* **docker:** honour PORT and MCP_PORT in the image and its healthcheck ([33a0187](https://github.com/dominik1001/caldav-mcp/commit/33a01874cd71e6bd71ddcbcc531a61d498eed45d))
+* load the HTTP server only in --http mode ([5bf5405](https://github.com/dominik1001/caldav-mcp/commit/5bf540522c0ec4b065dbea565fa7b074a7e18e03))
+* only treat 127.x.x.x IP literals as loopback ([578b62b](https://github.com/dominik1001/caldav-mcp/commit/578b62ba855356e979bd446a5314d578b6207b27))
+
+
+### Features
+
+* add --http flag to run as a remote Streamable HTTP server ([43cdfca](https://github.com/dominik1001/caldav-mcp/commit/43cdfca324997bd4206c6750d4820c2b2b69bcbd)), closes [#71](https://github.com/dominik1001/caldav-mcp/issues/71)
+* parse HTTP transport config from the environment ([b1a7e06](https://github.com/dominik1001/caldav-mcp/commit/b1a7e060ff6f5f9f3275551ad9935c545347ee81))
+* serve MCP over stateless Streamable HTTP ([1d05f3d](https://github.com/dominik1001/caldav-mcp/commit/1d05f3dbf66535870120d3e55d78b736b37b4ad5))
+* **transport:** add Streamable HTTP transport via --http flag ([5b7260f](https://github.com/dominik1001/caldav-mcp/commit/5b7260f606811f95d370b4088c92d6c5641e6dec))
+* **transport:** auth, per-request server, and 405 routing for HTTP ([69d1505](https://github.com/dominik1001/caldav-mcp/commit/69d15056db84262a5c8a17394fa7011bb439a3f4))
+
 ## [0.10.3](https://github.com/dominik1001/caldav-mcp/compare/v0.10.2...v0.10.3) (2026-10-23)
 
 

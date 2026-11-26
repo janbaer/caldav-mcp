@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
+import { readScheduling } from "./calendar-address.js";
 import { expandEvents } from "./recurrence.js";
 
 interface ListEventsInput {
@@ -30,7 +31,7 @@ export const listEventsDefinition = {
 	},
 	name: "list-events",
 	returns:
-		"A list of occurrences that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, `recurring`, `occurrence`, and optionally `description` and `location`. A recurring series contributes one entry per occurrence, so several entries share a `uid`. Careful when acting on one of them: `uid` addresses the whole series, and update-event and delete-event take nothing finer, so they change or remove every instance. `occurrence` names the single slot for display and cannot be passed back to target it.",
+		"A list of occurrences that fall within the given timeframe, each containing `uid`, `summary`, `start`, `end`, `recurring`, `occurrence`, and optionally `description`, `location`, `organizer` (email) and `attendees` (emails). A recurring series contributes one entry per occurrence, so several entries share a `uid`. Careful when acting on one of them: `uid` addresses the whole series, and update-event and delete-event take nothing finer, so they change or remove every instance. `occurrence` names the single slot for display and cannot be passed back to target it.",
 } as const;
 
 export function registerListEvents(client: CalDAVClient, server: McpServer) {
@@ -50,22 +51,27 @@ export function registerListEvents(client: CalDAVClient, server: McpServer) {
 				start: windowStart,
 			});
 			const data = expandEvents(allEvents, windowStart, windowEnd).map(
-				({ event, start: occurrenceStart, key, fromSeries }) => ({
-					end: new Date(
-						occurrenceStart.getTime() +
-							(event.end.getTime() - event.start.getTime())
-					),
-					// Identifies this occurrence within the series. `uid` addresses the
-					// whole series, so update-event and delete-event acting on it hit
-					// every instance, not the one shown here.
-					occurrence: key,
-					recurring: fromSeries,
-					start: occurrenceStart,
-					summary: event.summary,
-					uid: event.uid,
-					...(event.description && { description: event.description }),
-					...(event.location && { location: event.location }),
-				})
+				({ event, start: occurrenceStart, key, fromSeries }) => {
+					const { organizer, attendees } = readScheduling(event.customFields);
+					return {
+						end: new Date(
+							occurrenceStart.getTime() +
+								(event.end.getTime() - event.start.getTime())
+						),
+						// Identifies this occurrence within the series. `uid` addresses the
+						// whole series, so update-event and delete-event acting on it hit
+						// every instance, not the one shown here.
+						occurrence: key,
+						recurring: fromSeries,
+						start: occurrenceStart,
+						summary: event.summary,
+						uid: event.uid,
+						...(event.description && { description: event.description }),
+						...(event.location && { location: event.location }),
+						...(organizer && { organizer }),
+						...(attendees.length > 0 && { attendees }),
+					};
+				}
 			);
 			return {
 				content: [{ text: JSON.stringify(data), type: "text" }],

@@ -1,12 +1,15 @@
 #!/usr/bin/env tsx
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { hrefFor } from "../src/tools/caldav-href.js";
 
-const ABSOLUTE_URL = /^https?:\/\//;
-const BARE_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const RRULE_LINE = /^RRULE:(.*)$/m;
-const RRULE_UNTIL = /(?:^|;)UNTIL=([^;]*)/;
+const ABSOLUTE_URL = /^https?:\/\//u;
+const BARE_DATE = /^\d{4}-\d{2}-\d{2}$/u;
+const RRULE_LINE = /^RRULE:(?<rule>.*)$/mu;
+const RRULE_UNTIL = /(?:^|;)UNTIL=(?<until>[^;]*)/u;
 
 interface ListedCalendar {
 	displayName?: string;
@@ -49,7 +52,9 @@ function requireEnv(name: string): string {
 }
 
 function expectIcsProp(ics: string, name: string, expectedValue: string) {
-	const actual = ics.match(new RegExp(`^${name}[;:](.*)$`, "m"))?.[1]?.trim();
+	const actual = ics
+		.match(new RegExp(`^${name}[;:](?<value>.*)$`, "mu"))
+		?.groups?.value?.trim();
 	if (actual !== expectedValue) {
 		throw new Error(`${name} mismatch: ${actual} !== ${expectedValue}\n${ics}`);
 	}
@@ -173,8 +178,8 @@ async function smokeWholeDayEvents(client: Client, calendarUrl: string) {
 			}
 			// ts-caldav writes a whole-day UNTIL in extended form (2030-10-26),
 			// so compare the calendar day, not the spelling.
-			const rrule = ics.match(RRULE_LINE)?.[1]?.trim() ?? "";
-			const until = rrule.match(RRULE_UNTIL)?.[1] ?? "";
+			const rrule = ics.match(RRULE_LINE)?.groups?.rule?.trim() ?? "";
+			const until = rrule.match(RRULE_UNTIL)?.groups?.until ?? "";
 			if (
 				until.replaceAll("-", "") !== offsetWholeDayUntil.replaceAll("-", "")
 			) {
@@ -271,6 +276,35 @@ async function smokeWholeDayEvents(client: Client, calendarUrl: string) {
 	}
 }
 
+async function todoReminders(
+	client: Client,
+	calendarUrl: string,
+	uid: string
+): Promise<string[]> {
+	const listed = JSON.parse(
+		unwrapText(
+			await client.callTool({
+				arguments: { calendarUrl, status: "ALL" },
+				name: "list-todos",
+			})
+		)
+	) as { todos: Array<{ uid: string; reminders: string[] }> };
+	const found = listed.todos.find((t) => t.uid === uid);
+	if (!found) {
+		throw new Error(`Todo ${uid} not found in list-todos`);
+	}
+	return found.reminders;
+}
+
+function assertReminders(actual: string[], expected: string[], when: string) {
+	const times = (xs: string[]) => xs.map((x) => new Date(x).getTime());
+	if (JSON.stringify(times(actual)) !== JSON.stringify(times(expected))) {
+		throw new Error(
+			`Todo reminders ${when}: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`
+		);
+	}
+}
+
 async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 	// VTODO round-trip: create → list → complete → update → delete on a
 	// task-capable collection. Tasks often live in a separate VTODO calendar;
@@ -283,11 +317,15 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 		log("using todo calendar", todoCalendar.displayName ?? todoCalendarUrl);
 
 		const todoSummary = `caldav-mcp smoke todo ${new Date().toISOString()}`;
+		const reminderAt = new Date(
+			Math.ceil(Date.now() / 60_000) * 60_000 + 23 * 60 * 60 * 1000
+		).toISOString();
 		const todoUid = unwrapText(
 			await client.callTool({
 				arguments: {
 					calendarUrl: todoCalendarUrl,
 					due: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+					reminderAt,
 					summary: todoSummary,
 				},
 				name: "create-todo",
@@ -302,7 +340,14 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 					name: "list-todos",
 				})
 			)
-		) as { todos: Array<{ uid: string; summary: string; status: string }> };
+		) as {
+			todos: Array<{
+				uid: string;
+				summary: string;
+				status: string;
+				reminders: string[];
+			}>;
+		};
 		const foundTodo = listedTodos.todos.find((t) => t.uid === todoUid);
 		if (!foundTodo) {
 			throw new Error(`Created todo ${todoUid} not found in list-todos`);
@@ -312,6 +357,7 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 				`Todo summary mismatch: ${foundTodo.summary} !== ${todoSummary}`
 			);
 		}
+		assertReminders(foundTodo.reminders, [reminderAt], "after create-todo");
 		log("listed todo", { status: foundTodo.status, uid: foundTodo.uid });
 
 		unwrapText(
@@ -348,6 +394,48 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 			})
 		);
 		log("updated todo", todoUid);
+		assertReminders(
+			await todoReminders(client, todoCalendarUrl, todoUid),
+			[reminderAt],
+			"after an update-todo that leaves reminders alone"
+		);
+
+		const movedReminderAt = new Date(
+			new Date(reminderAt).getTime() + 60 * 60 * 1000
+		).toISOString();
+		unwrapText(
+			await client.callTool({
+				arguments: {
+					calendarUrl: todoCalendarUrl,
+					reminderAt: movedReminderAt,
+					uid: todoUid,
+				},
+				name: "update-todo",
+			})
+		);
+		assertReminders(
+			await todoReminders(client, todoCalendarUrl, todoUid),
+			[movedReminderAt],
+			"after moving the reminder"
+		);
+		log("moved todo reminder", movedReminderAt);
+
+		unwrapText(
+			await client.callTool({
+				arguments: {
+					calendarUrl: todoCalendarUrl,
+					reminderAt: null,
+					uid: todoUid,
+				},
+				name: "update-todo",
+			})
+		);
+		assertReminders(
+			await todoReminders(client, todoCalendarUrl, todoUid),
+			[],
+			"after clearing the reminder"
+		);
+		log("cleared todo reminder");
 
 		unwrapText(
 			await client.callTool({
@@ -372,23 +460,94 @@ async function smokeTodos(client: Client, calendars: ListedCalendar[]) {
 	}
 }
 
-async function main() {
-	const transport = new StdioClientTransport({
-		args: ["dist/index.js"],
-		command: "node",
-		env: {
-			CALDAV_BASE_URL: requireEnv("CALDAV_BASE_URL"),
-			CALDAV_PASSWORD: requireEnv("CALDAV_PASSWORD"),
-			CALDAV_USERNAME: requireEnv("CALDAV_USERNAME"),
-			PATH: process.env.PATH ?? "",
-			// Whole-day dates only shift east of UTC, so CI pins a zone here.
-			...(process.env.TZ && { TZ: process.env.TZ }),
-		},
-		stderr: "inherit",
-	});
+// The server's startup line in --http mode (src/index.ts).
+const LISTENING = /listening on (?<url>http:\/\/\S+\/mcp)/u;
+const STARTUP_TIMEOUT_MS = 10_000;
 
+function serverEnv(): Record<string, string> {
+	return {
+		CALDAV_BASE_URL: requireEnv("CALDAV_BASE_URL"),
+		CALDAV_PASSWORD: requireEnv("CALDAV_PASSWORD"),
+		CALDAV_USERNAME: requireEnv("CALDAV_USERNAME"),
+		PATH: process.env.PATH ?? "",
+		// Whole-day dates only shift east of UTC, so CI pins a zone here.
+		...(process.env.TZ && { TZ: process.env.TZ }),
+	};
+}
+
+async function connectStdio(client: Client): Promise<() => void> {
+	await client.connect(
+		new StdioClientTransport({
+			args: ["dist/index.js"],
+			command: "node",
+			env: serverEnv(),
+			stderr: "inherit",
+		})
+	);
+	return () => undefined;
+}
+
+/**
+ * Starts `dist/index.js --http` on an ephemeral port with a random token and
+ * connects over Streamable HTTP. Returns a function that stops the server.
+ */
+async function connectHttp(client: Client): Promise<() => void> {
+	const token = randomUUID();
+	const child = spawn("node", ["dist/index.js", "--http"], {
+		env: { ...serverEnv(), MCP_AUTH_TOKEN: token, MCP_PORT: "0" },
+		stdio: ["ignore", "inherit", "pipe"],
+	});
+	const stop = () => {
+		child.kill();
+	};
+	try {
+		const url = await new Promise<string>((resolve, reject) => {
+			const timer = setTimeout(
+				() => reject(new Error("HTTP server did not start within 10s")),
+				STARTUP_TIMEOUT_MS
+			);
+			let stderr = "";
+			child.stderr.on("data", (chunk: Buffer) => {
+				process.stderr.write(chunk);
+				stderr += chunk.toString();
+				const found = stderr.match(LISTENING)?.groups?.url;
+				if (found) {
+					clearTimeout(timer);
+					resolve(found);
+				}
+			});
+			child.once("exit", (code) => {
+				clearTimeout(timer);
+				reject(new Error(`HTTP server exited with code ${code}`));
+			});
+		});
+		await client.connect(
+			new StreamableHTTPClientTransport(new URL(url), {
+				requestInit: { headers: { Authorization: `Bearer ${token}` } },
+			})
+		);
+		log("connected over HTTP", url);
+	} catch (error) {
+		stop();
+		throw error;
+	}
+	return stop;
+}
+
+async function main() {
 	const client = new Client({ name: "caldav-mcp-smoke", version: "0.0.0" });
-	await client.connect(transport);
+	const stopServer =
+		process.env.SMOKE_TRANSPORT === "http"
+			? await connectHttp(client)
+			: await connectStdio(client);
+	try {
+		await runSmoke(client);
+	} finally {
+		stopServer();
+	}
+}
+
+async function runSmoke(client: Client) {
 	log("connected to server");
 
 	const { tools } = await client.listTools();

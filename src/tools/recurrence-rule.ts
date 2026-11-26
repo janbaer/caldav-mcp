@@ -1,5 +1,6 @@
 import type { RecurrenceRule } from "ts-caldav";
 import { z } from "zod";
+import { isoDateTime } from "./iso-datetime.js";
 import { toWholeDayDate } from "./whole-day-date.js";
 
 export interface RecurrenceRuleInput {
@@ -48,5 +49,5 @@ export const recurrenceRuleSchema = z.object({
 	count: z.number().optional(),
 	freq: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]).optional(),
 	interval: z.number().optional(),
-	until: z.string().datetime({ offset: true }).optional(), // ISO 8601 string
+	until: isoDateTime("Last occurrence at or before this datetime").optional(),
 });

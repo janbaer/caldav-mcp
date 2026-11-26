@@ -2,7 +2,15 @@ pre-commit:
   parallel: false
   commands:
     gitleaks:
-      run: gitleaks git --staged --redact --no-banner
+      # A missing gitleaks must not fail the whole hook: that pushes
+      # contributors to --no-verify, which skips every other check too.
+      # CI scans pull requests with gitleaks either way.
+      run: |
+        if ! command -v gitleaks >/dev/null 2>&1; then
+          echo "gitleaks is not installed, skipping the local secret scan (CI still runs it). Install: brew install gitleaks"
+          exit 0
+        fi
+        gitleaks git --staged --redact --no-banner
     ultracite:
       run: npx ultracite fix --staged
       stage_fixed: true
