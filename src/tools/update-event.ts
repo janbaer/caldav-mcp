@@ -12,6 +12,7 @@ import {
 import { isoDateTime } from "./iso-datetime.js";
 import type { RecurrenceRuleInput } from "./recurrence-rule.js";
 import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
+import { writableAlarms } from "./reminder.js";
 import { carryOverWholeDayDates, toWholeDayDate } from "./whole-day-date.js";
 
 interface UpdateEventInput {
@@ -122,6 +123,7 @@ export function registerUpdateEvent(client: CalDAVClient, server: McpServer) {
 
 			const updated = await client.updateEvent(calendarUrl, {
 				...existing,
+				...(existing.alarms && { alarms: writableAlarms(existing.alarms) }),
 				// Dates the caller doesn't pass are carried over; reshape them so the
 				// writer stores the same days. Explicit values below override these.
 				...(effectiveWholeDay && carryOverWholeDayDates(existing)),

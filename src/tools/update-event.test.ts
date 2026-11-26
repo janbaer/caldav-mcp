@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CalDAVClient, Event } from "ts-caldav";
+import type { Event } from "ts-caldav";
+import { CalDAVClient } from "ts-caldav";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerUpdateEvent } from "./update-event.js";
 
@@ -568,5 +569,110 @@ describe("registerUpdateEvent organizer and attendees", () => {
 		await expect(
 			update(existingEvent, { attendees: ["a@example.com"] })
 		).rejects.toThrow("attendees need an organizer");
+	});
+});
+
+// Runs ts-caldav's own reader and writer, with only the HTTP calls stubbed, so
+// the alarms go through the same round trip as against a server.
+describe("registerUpdateEvent alarm round trip", () => {
+	function eventIcs(alarms: string): string {
+		return [
+			"BEGIN:VCALENDAR",
+			"VERSION:2.0",
+			"PRODID:-//Example Corp//Calendar//EN",
+			"BEGIN:VEVENT",
+			"UID:event-123",
+			"DTSTAMP:20261120T100000Z",
+			"DTSTART:20261127T090000Z",
+			"DTEND:20261127T100000Z",
+			"SUMMARY:Original summary",
+			alarms,
+			"END:VEVENT",
+			"END:VCALENDAR",
+		].join("\r\n");
+	}
+
+	function multistatus(ics: string): string {
+		return `<?xml version="1.0" encoding="utf-8"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+	<d:response>
+		<d:href>/f/test-calendar/event-123.ics</d:href>
+		<d:propstat>
+			<d:prop>
+				<d:getetag>"abc123"</d:getetag>
+				<cal:calendar-data>${ics}</cal:calendar-data>
+			</d:prop>
+			<d:status>HTTP/1.1 200 OK</d:status>
+		</d:propstat>
+	</d:response>
+</d:multistatus>`;
+	}
+
+	async function updateSummaryOf(storedIcs: string): Promise<string> {
+		const client = new CalDAVClient({
+			auth: { password: "secret", type: "basic", username: "user" },
+			baseUrl: "https://caldav.example.com",
+		});
+		vi.spyOn(client, "report").mockResolvedValue(multistatus(storedIcs));
+		vi.spyOn(client, "getCtag").mockResolvedValue("ctag");
+		const put = vi
+			.spyOn(client, "mkIcsPut")
+			.mockResolvedValue({ data: "", headers: {}, status: 204 });
+
+		const { server, getHandler } = makeServer();
+		registerUpdateEvent(client, server);
+		const handler = getHandler();
+		if (!handler) {
+			throw new Error("handler not registered");
+		}
+		await handler({
+			calendarUrl: "/f/test-calendar/",
+			summary: "Updated summary",
+			uid: "event-123",
+		});
+
+		const written = put.mock.calls[0]?.[1];
+		if (written === undefined) {
+			throw new Error("event not written");
+		}
+		return written;
+	}
+
+	it("keeps an alarm with an absolute trigger time", async () => {
+		const written = await updateSummaryOf(
+			eventIcs(
+				[
+					"BEGIN:VALARM",
+					"ACTION:DISPLAY",
+					"DESCRIPTION:Reminder",
+					"TRIGGER;VALUE=DATE-TIME:20261127T080000Z",
+					"END:VALARM",
+				].join("\r\n")
+			)
+		);
+
+		expect(written).toContain("SUMMARY:Updated summary");
+		expect(written).toContain("TRIGGER;VALUE=DATE-TIME:20261127T080000Z");
+	});
+
+	it("keeps relative alarms unchanged", async () => {
+		const written = await updateSummaryOf(
+			eventIcs(
+				[
+					"BEGIN:VALARM",
+					"ACTION:DISPLAY",
+					"DESCRIPTION:Reminder",
+					"TRIGGER:-PT15M",
+					"END:VALARM",
+					"BEGIN:VALARM",
+					"ACTION:AUDIO",
+					"TRIGGER:P1D",
+					"END:VALARM",
+				].join("\r\n")
+			)
+		);
+
+		expect(written).toContain("TRIGGER:-PT15M");
+		expect(written).toContain("TRIGGER:P1D");
 	});
 });
