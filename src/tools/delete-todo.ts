@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { type CalDAVClient, CalDAVError } from "ts-caldav";
+import type { CalDAVClient } from "ts-caldav";
+import { CalDAVError } from "ts-caldav";
 import { z } from "zod";
 import { hrefFor, toCalendarPath } from "./caldav-href.js";
 

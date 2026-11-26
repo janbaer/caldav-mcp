@@ -1,14 +1,14 @@
 {
 	"name": "caldav-mcp",
-	"version": "0.10.3",
+	"version": "0.13.2",
 	"description": "A CalDAV client using Model Context Protocol (MCP) to expose calendar operations as tools for AI assistants.",
-	"homepage": "https://github.com/dominik1001/caldav-mcp#readme",
+	"homepage": "https://github.com/langmail/caldav-mcp#readme",
 	"bugs": {
-		"url": "https://github.com/dominik1001/caldav-mcp/issues"
+		"url": "https://github.com/langmail/caldav-mcp/issues"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/dominik1001/caldav-mcp.git"
+		"url": "https://github.com/langmail/caldav-mcp.git"
 	},
 	"license": "MIT",
 	"author": "Dominik Grusemann",
@@ -33,7 +33,8 @@
 		"prepare": "lefthook install",
 		"semantic-release": "semantic-release",
 		"smoke": "npm run build && tsx --env-file=.env scripts/smoke.ts",
-		"smoke:agent": "npm run build && bash scripts/smoke-agent.sh",
+		"smoke:agent": "npm run build && bash scripts/smoke-agent.sh && tsx --env-file=.env scripts/smoke-agent-reminder.ts",
+		"smoke:http": "npm run build && SMOKE_TRANSPORT=http tsx --env-file=.env scripts/smoke.ts",
 		"test": "vitest run",
 		"test:coverage": "vitest run --coverage",
 		"test:watch": "vitest",
@@ -42,6 +43,7 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.26.0",
+		"ical.js": "^2.2.1",
 		"ts-caldav": "^0.4.0",
 		"zod": "^4.4.3"
 	},
@@ -57,16 +59,16 @@
 		"@vitest/coverage-v8": "^5.0.0",
 		"knip": "^6.12.1",
 		"lefthook": "^2.1.6",
-		"semantic-release": "^25.0.3",
+		"semantic-release": "^26.0.1",
 		"shx": "^0.4.0",
 		"tsx": "^4.21.0",
 		"typescript": "^7.0.2",
-		"ultracite": "8.0.1",
+		"ultracite": "8.3.1",
 		"vitest": "^5.0.0"
 	},
 	"engines": {
 		"node": ">=18.0.0",
 		"npm": ">=9.0.0"
 	},
-	"mcpName": "io.github.dominik1001/caldav-mcp"
+	"mcpName": "io.github.langmail/caldav-mcp"
 }

@@ -1,7 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient } from "ts-caldav";
-import { describe, expect, test, vi } from "vitest";
-import { registerCreateEvent } from "./create-event.js";
+import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import { createEventDefinition, registerCreateEvent } from "./create-event.js";
 
 type ToolHandler = (params: {
 	summary: string;
@@ -13,6 +14,8 @@ type ToolHandler = (params: {
 	location?: string;
 	reminderBefore?: string;
 	transparent?: boolean;
+	organizer?: string;
+	attendees?: string[];
 	recurrenceRule?: {
 		freq?: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
 		interval?: number;
@@ -40,7 +43,7 @@ function makeServer() {
 }
 
 describe("registerCreateEvent", () => {
-	test("converts recurrenceRule.until from ISO string to Date", async () => {
+	it("converts recurrenceRule.until from ISO string to Date", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -67,7 +70,7 @@ describe("registerCreateEvent", () => {
 		expect(passed?.recurrenceRule?.freq).toBe("DAILY");
 	});
 
-	test("omits recurrenceRule when not provided", async () => {
+	it("omits recurrenceRule when not provided", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -90,7 +93,7 @@ describe("registerCreateEvent", () => {
 		expect(passed?.recurrenceRule).toBeUndefined();
 	});
 
-	test("passes wholeDay flag when true", async () => {
+	it("passes wholeDay flag when true", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -114,7 +117,7 @@ describe("registerCreateEvent", () => {
 		expect(passed?.wholeDay).toBe(true);
 	});
 
-	test("passes wholeDay flag when false", async () => {
+	it("passes wholeDay flag when false", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -138,7 +141,7 @@ describe("registerCreateEvent", () => {
 		expect(passed?.wholeDay).toBe(false);
 	});
 
-	test("preserves the calendar date for whole-day events with a positive UTC offset", async () => {
+	it("preserves the calendar date for whole-day events with a positive UTC offset", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -170,7 +173,7 @@ describe("registerCreateEvent", () => {
 		);
 	});
 
-	test("omits wholeDay when not provided", async () => {
+	it("omits wholeDay when not provided", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -193,7 +196,7 @@ describe("registerCreateEvent", () => {
 		expect(passed).not.toHaveProperty("wholeDay");
 	});
 
-	test("passes reminderBefore as a negative DISPLAY alarm and transparent as TRANSP", async () => {
+	it("passes reminderBefore as a negative DISPLAY alarm and transparent as TRANSP", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -221,7 +224,7 @@ describe("registerCreateEvent", () => {
 		expect(passed?.customFields).toEqual({ transp: "TRANSPARENT" });
 	});
 
-	test("omits alarms and customFields when neither option is given", async () => {
+	it("omits alarms and customFields when neither option is given", async () => {
 		const mockClient = {
 			createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
 		};
@@ -243,5 +246,79 @@ describe("registerCreateEvent", () => {
 		const passed = mockClient.createEvent.mock.calls[0]?.[1];
 		expect(passed).not.toHaveProperty("alarms");
 		expect(passed).not.toHaveProperty("customFields");
+	});
+
+	describe("organizer and attendees", () => {
+		async function create(extra: { organizer?: string; attendees?: string[] }) {
+			const mockClient = {
+				createEvent: vi.fn().mockResolvedValue({ uid: "event-123" }),
+			};
+			const { server, getHandler } = makeServer();
+			registerCreateEvent(mockClient as unknown as CalDAVClient, server);
+			const handler = getHandler();
+			if (!handler) {
+				throw new Error("handler not registered");
+			}
+			await handler({
+				calendarUrl: "/f/test-calendar/",
+				end: "2026-05-12T10:30:00.000Z",
+				start: "2026-05-12T10:00:00.000Z",
+				summary: "Meeting",
+				...extra,
+			});
+			return mockClient.createEvent.mock.calls[0]?.[1];
+		}
+
+		it("writes organizer and attendees as mailto: custom fields", async () => {
+			const passed = await create({
+				attendees: ["a@example.com", "b@example.com"],
+				organizer: "o@example.com",
+			});
+			expect(passed?.customFields).toEqual({
+				attendee: ["mailto:a@example.com", "mailto:b@example.com"],
+				organizer: "mailto:o@example.com",
+			});
+		});
+
+		it("writes an organizer without attendees", async () => {
+			const passed = await create({ organizer: "o@example.com" });
+			expect(passed?.customFields).toEqual({
+				organizer: "mailto:o@example.com",
+			});
+		});
+
+		it("omits customFields when neither is given", async () => {
+			const passed = await create({});
+			expect(passed).not.toHaveProperty("customFields");
+		});
+
+		it("rejects attendees without an organizer", async () => {
+			await expect(create({ attendees: ["a@example.com"] })).rejects.toThrow(
+				"attendees need an organizer"
+			);
+		});
+
+		it("rejects addresses that would change the ICS structure", () => {
+			const schema = z.object(createEventDefinition.inputSchema);
+			const base = {
+				calendarUrl: "/f/test-calendar/",
+				end: "2026-05-12T10:30:00.000Z",
+				organizer: "o@example.com",
+				start: "2026-05-12T10:00:00.000Z",
+				summary: "Meeting",
+			};
+			expect(
+				schema.safeParse({
+					...base,
+					attendees: ["a@b.com\r\nATTENDEE:mailto:evil@x.com"],
+				}).success
+			).toBe(false);
+			expect(
+				schema.safeParse({ ...base, organizer: "mailto:o@example.com" }).success
+			).toBe(false);
+			expect(
+				schema.safeParse({ ...base, attendees: ["a@example.com"] }).success
+			).toBe(true);
+		});
 	});
 });

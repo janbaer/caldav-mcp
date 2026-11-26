@@ -3,17 +3,35 @@ import type { CalDAVClient } from "ts-caldav";
 import { z } from "zod";
 import { toCalendarPath } from "./caldav-href.js";
 import {
+	assertOrganizerForAttendees,
+	emailAddressSchema,
+	toCalAddress,
+} from "./calendar-address.js";
+import {
 	reminderBeforeSchema,
 	toAlarm,
 	toTransp,
 	transparentSchema,
 } from "./event-extras.js";
+import { isoDateTime } from "./iso-datetime.js";
+import type { RecurrenceRuleInput } from "./recurrence-rule.js";
 import { recurrenceRuleSchema, toRecurrenceRule } from "./recurrence-rule.js";
 import { toWholeDayDate } from "./whole-day-date.js";
 
-type CreateEventInput = z.infer<
-	z.ZodObject<typeof createEventDefinition.inputSchema>
->;
+interface CreateEventInput {
+	attendees?: string[] | undefined;
+	calendarUrl: string;
+	description?: string | undefined;
+	end: string;
+	location?: string | undefined;
+	organizer?: string | undefined;
+	recurrenceRule?: RecurrenceRuleInput | undefined;
+	reminderBefore?: string | undefined;
+	start: string;
+	summary: string;
+	transparent?: boolean | undefined;
+	wholeDay?: boolean | undefined;
+}
 
 export const createEventDefinition = {
 	description:
@@ -21,21 +39,26 @@ export const createEventDefinition = {
 	inputSchema: {
 		calendarUrl: z.string(),
 		description: z.string().optional(),
-		end: z
-			.string()
-			.datetime({ offset: true })
-			.describe("End datetime (ISO 8601)"),
+		end: isoDateTime("End datetime"),
 		location: z.string().optional(),
+		organizer: emailAddressSchema
+			.optional()
+			.describe(
+				"Organizer email (no mailto:), written as ORGANIZER; a scheduling-capable server (e.g. Radicale with the email/iMIP hook) uses it to send invitations, updates and cancellations to the attendees."
+			),
 		recurrenceRule: recurrenceRuleSchema.optional(),
 		reminderBefore: reminderBeforeSchema
 			.optional()
 			.describe(
 				"Display reminder before the event start, as ISO 8601 duration in weeks, days, hours, minutes or seconds (e.g. P3D, PT30M)"
 			),
-		start: z
-			.string()
-			.datetime({ offset: true })
-			.describe("Start datetime (ISO 8601)"),
+		start: isoDateTime("Start datetime"),
+		attendees: z
+			.array(emailAddressSchema)
+			.optional()
+			.describe(
+				"Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Requires organizer."
+			),
 		summary: z.string(),
 		transparent: transparentSchema
 			.optional()
@@ -64,8 +87,23 @@ export function registerCreateEvent(client: CalDAVClient, server: McpServer) {
 				recurrenceRule,
 				reminderBefore,
 				transparent,
+				organizer,
+				attendees,
 			} = args;
 			const calendarUrl = toCalendarPath(args.calendarUrl, client.baseUrl);
+			assertOrganizerForAttendees(organizer, attendees ?? []);
+			// organizer/attendees and TRANSP go through ts-caldav's customFields,
+			// which it writes as plain ICS properties.
+			const customFields: Record<string, string | string[]> = {};
+			if (organizer) {
+				customFields.organizer = toCalAddress(organizer);
+			}
+			if (attendees?.length) {
+				customFields.attendee = attendees.map(toCalAddress);
+			}
+			if (transparent !== undefined) {
+				customFields.transp = toTransp(transparent);
+			}
 			const event = await client.createEvent(calendarUrl, {
 				end: wholeDay ? toWholeDayDate(end) : new Date(end),
 				start: wholeDay ? toWholeDayDate(start) : new Date(start),
@@ -79,9 +117,7 @@ export function registerCreateEvent(client: CalDAVClient, server: McpServer) {
 				...(reminderBefore !== undefined && {
 					alarms: [toAlarm(reminderBefore, summary)],
 				}),
-				...(transparent !== undefined && {
-					customFields: { transp: toTransp(transparent) },
-				}),
+				...(Object.keys(customFields).length > 0 && { customFields }),
 			});
 
 			return {

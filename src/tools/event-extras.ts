@@ -1,16 +1,20 @@
 import type { Alarm } from "ts-caldav";
 import { z } from "zod";
 
-const DURATION = /^P(?!$)(\d+W|(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?)$/;
-const NON_ZERO = /[1-9]/;
+const DURATION =
+	/^P(?!$)(?:\d+W|(?:\d+D)?(?:T(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+S)?)?)$/u;
+const NON_ZERO = /[1-9]/u;
 
+// `refine`, not `.regex()`: zod emits `.regex()` as a JSON Schema `pattern`,
+// which grammar-constrained clients such as llama.cpp may fail to compile
+// (issue #171).
 export const reminderBeforeSchema = z
 	.string()
-	.regex(DURATION, {
+	.refine((value) => DURATION.test(value), {
 		message:
 			"Use weeks, days, hours, minutes or seconds, e.g. P4W, P3D, PT30M. Months and years are not supported.",
 	})
-	.regex(NON_ZERO, {
+	.refine((value) => NON_ZERO.test(value), {
 		message: "A reminder has to be before the event start, not zero.",
 	});
 

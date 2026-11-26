@@ -1,0 +1,22 @@
+# This routine's parameters as set in claude.ai. claude.ai is
+# authoritative; update this file when you change the routine there.
+# See .agents/skills/scheduled-agent-design/SKILL.md.
+id: trig_01CfHaivZw1fHnRxQDi5s4BN
+name: "langmail/caldav-mcp: Resolve merge conflicts"
+prompt: Read WORKFLOW.md, then .agents/skills/resolve-conflicts/SKILL.md, and follow them.
+repository: langmail/caldav-mcp
+# A public repository: its own repository is the only source, and the
+# routine has no connectors and an environment without production secrets.
+sources: [langmail/caldav-mcp]
+environment: env_011CUywMk4cTnnMdaiQdaM31
+model: claude-opus-5-5
+schedule: null
+triggers:
+  # GitHub sends no event when a PR starts to conflict, so each merge sweeps
+  # every open PR. A direct push to main waits for the next merge.
+  - "github: pull_request.closed (merged into main, webhook trigger 3f277068-5b99-4968-bc89-e9711b5782b2)"
+tools: [Bash, Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent, Skill]
+connectors: []
+# Off in a public repository: anyone can comment on the routine's PRs.
+autofix_on_pr_create: false
+notifications: {push: true, email: false, slack: false}

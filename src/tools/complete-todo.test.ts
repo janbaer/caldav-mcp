@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient, Todo } from "ts-caldav";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { registerCompleteTodo } from "./complete-todo.js";
 
 type ToolHandler = (params: {
@@ -32,7 +32,7 @@ function makeServer() {
 }
 
 describe("registerCompleteTodo", () => {
-	test("sets status COMPLETED and a completed timestamp", async () => {
+	it("sets status COMPLETED and a completed timestamp", async () => {
 		const mockClient = {
 			getTodosByHref: vi.fn().mockResolvedValue([existingTodo]),
 			updateTodo: vi.fn().mockResolvedValue({
@@ -58,7 +58,7 @@ describe("registerCompleteTodo", () => {
 		expect(passed.summary).toBe("Finish report");
 	});
 
-	test("throws when the todo is not found", async () => {
+	it("throws when the todo is not found", async () => {
 		const mockClient = {
 			getTodosByHref: vi.fn().mockResolvedValue([]),
 			updateTodo: vi.fn(),
@@ -74,5 +74,29 @@ describe("registerCompleteTodo", () => {
 			handler({ calendarUrl: "/f/tasks/", uid: "missing" })
 		).rejects.toThrow("Todo not found: missing");
 		expect(mockClient.updateTodo).not.toHaveBeenCalled();
+	});
+
+	it("keeps an absolute reminder writable", async () => {
+		const mockClient = {
+			getTodosByHref: vi.fn().mockResolvedValue([
+				{
+					...existingTodo,
+					alarms: [{ action: "DISPLAY", trigger: "2026-11-27T08:00:00Z" }],
+				},
+			]),
+			updateTodo: vi.fn().mockResolvedValue({ uid: "todo-123" }),
+		};
+		const { server, getHandler } = makeServer();
+		registerCompleteTodo(mockClient as unknown as CalDAVClient, server);
+		const handler = getHandler();
+		if (!handler) {
+			throw new Error("handler not registered");
+		}
+
+		await handler({ calendarUrl: "/f/tasks/", uid: "todo-123" });
+
+		const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+		expect(typeof passed.alarms[0].trigger).not.toBe("string");
+		expect(String(passed.alarms[0].trigger)).toBe("2026-11-27T08:00:00Z");
 	});
 });

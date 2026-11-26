@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CalDAVClient, Todo } from "ts-caldav";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { registerUpdateTodo } from "./update-todo.js";
 
 type ToolHandler = (params: {
@@ -11,6 +11,7 @@ type ToolHandler = (params: {
 	start?: string;
 	description?: string;
 	location?: string;
+	reminderAt?: string | null;
 	status?: "NEEDS-ACTION" | "COMPLETED" | "IN-PROCESS" | "CANCELLED";
 }) => Promise<{ content: { type: string; text: string }[] }>;
 
@@ -38,7 +39,7 @@ function makeServer() {
 }
 
 describe("registerUpdateTodo", () => {
-	test("updates only the provided fields and returns the uid", async () => {
+	it("updates only the provided fields and returns the uid", async () => {
 		const mockClient = {
 			getTodosByHref: vi.fn().mockResolvedValue([existingTodo]),
 			updateTodo: vi.fn().mockResolvedValue({
@@ -78,7 +79,7 @@ describe("registerUpdateTodo", () => {
 		expect(passed.due.toISOString()).toBe(dueIso);
 	});
 
-	test("throws when the todo is not found", async () => {
+	it("throws when the todo is not found", async () => {
 		const mockClient = {
 			getTodosByHref: vi.fn().mockResolvedValue([]),
 			updateTodo: vi.fn(),
@@ -96,7 +97,7 @@ describe("registerUpdateTodo", () => {
 		expect(mockClient.updateTodo).not.toHaveBeenCalled();
 	});
 
-	test("preserves the existing todo intact when no mutating fields are given", async () => {
+	it("preserves the existing todo intact when no mutating fields are given", async () => {
 		const existing: Todo = {
 			...existingTodo,
 			description: "keep me",
@@ -132,7 +133,7 @@ describe("registerUpdateTodo", () => {
 		expect(passed.due).toBe(existing.due);
 	});
 
-	test("stamps a completed timestamp when status transitions to COMPLETED", async () => {
+	it("stamps a completed timestamp when status transitions to COMPLETED", async () => {
 		const mockClient = {
 			getTodosByHref: vi.fn().mockResolvedValue([existingTodo]),
 			updateTodo: vi.fn().mockResolvedValue({
@@ -160,7 +161,7 @@ describe("registerUpdateTodo", () => {
 		expect(passed.completed).toBeInstanceOf(Date);
 	});
 
-	test("preserves the original completion time when an already-done task is re-completed", async () => {
+	it("preserves the original completion time when an already-done task is re-completed", async () => {
 		const completedAt = new Date("2026-01-02T03:04:05.000Z");
 		const existing: Todo = {
 			...existingTodo,
@@ -194,7 +195,7 @@ describe("registerUpdateTodo", () => {
 		expect(passed.completed).toBe(completedAt);
 	});
 
-	test("clears the completed timestamp when status transitions away from COMPLETED", async () => {
+	it("clears the completed timestamp when status transitions away from COMPLETED", async () => {
 		const existing: Todo = {
 			...existingTodo,
 			completed: new Date("2026-01-02T03:04:05.000Z"),
@@ -225,5 +226,81 @@ describe("registerUpdateTodo", () => {
 		const passed = mockClient.updateTodo.mock.calls[0]?.[1];
 		expect(passed.status).toBe("NEEDS-ACTION");
 		expect(passed.completed).toBeUndefined();
+	});
+
+	describe("reminderAt", () => {
+		const withAlarm: Todo = {
+			...existingTodo,
+			alarms: [
+				{
+					action: "DISPLAY",
+					description: "Original",
+					trigger: "2026-11-27T08:00:00Z",
+				},
+			],
+		};
+
+		function setupWith(existing: Todo) {
+			const mockClient = {
+				getTodosByHref: vi.fn().mockResolvedValue([existing]),
+				updateTodo: vi.fn().mockResolvedValue({ uid: "todo-123" }),
+			};
+			const { server, getHandler } = makeServer();
+			registerUpdateTodo(mockClient as unknown as CalDAVClient, server);
+			const handler = getHandler();
+			if (!handler) {
+				throw new Error("handler not registered");
+			}
+			return { handler, mockClient };
+		}
+
+		it("replaces existing alarms with one at the new time", async () => {
+			const { handler, mockClient } = setupWith(withAlarm);
+
+			await handler({
+				calendarUrl: "/f/tasks/",
+				reminderAt: "2026-11-27T10:00:00+01:00",
+				summary: "Renamed",
+				uid: "todo-123",
+			});
+
+			const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+			expect(passed.alarms).toHaveLength(1);
+			expect(passed.alarms[0].description).toBe("Renamed");
+			expect(typeof passed.alarms[0].trigger).not.toBe("string");
+			expect(String(passed.alarms[0].trigger)).toBe("2026-11-27T09:00:00Z");
+		});
+
+		it("removes all alarms for null and keeps the task", async () => {
+			const { handler, mockClient } = setupWith(withAlarm);
+
+			await handler({
+				calendarUrl: "/f/tasks/",
+				reminderAt: null,
+				uid: "todo-123",
+			});
+
+			const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+			expect(passed.alarms).toEqual([]);
+			expect(passed.summary).toBe("Original");
+		});
+
+		it("keeps an absolute alarm when another field changes", async () => {
+			const { handler, mockClient } = setupWith(withAlarm);
+
+			await handler({
+				calendarUrl: "/f/tasks/",
+				summary: "Renamed",
+				uid: "todo-123",
+			});
+
+			const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+			expect(passed.alarms).toHaveLength(1);
+			// Not the read-back string: ical.js only writes an ICAL.Time as
+			// TRIGGER;VALUE=DATE-TIME.
+			expect(typeof passed.alarms[0].trigger).not.toBe("string");
+			expect(String(passed.alarms[0].trigger)).toBe("2026-11-27T08:00:00Z");
+			expect(passed.alarms[0].description).toBe("Renamed");
+		});
 	});
 });
