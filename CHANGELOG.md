@@ -1,3 +1,9 @@
+# [0.13.0](https://github.com/langmail/caldav-mcp/compare/v0.12.1...v0.13.0) (2026-11-26)
+
+### Features
+
+* set, move and clear reminders on tasks ([#195](https://github.com/langmail/caldav-mcp/issues/195)) ([497ed59](https://github.com/langmail/caldav-mcp/commit/497ed59785ea3c8cb647114e7c4a56928d12a958)), closes [#192](https://github.com/langmail/caldav-mcp/issues/192) [#170](https://github.com/langmail/caldav-mcp/issues/170)
+
 ## [0.12.1](https://github.com/langmail/caldav-mcp/compare/v0.12.0...v0.12.1) (2026-11-23)
 
 ### Bug Fixes
