@@ -1,3 +1,9 @@
+## [0.13.2](https://github.com/langmail/caldav-mcp/compare/v0.13.1...v0.13.2) (2026-11-26)
+
+### Bug Fixes
+
+* **update-event:** keep alarms with an absolute trigger time ([#194](https://github.com/langmail/caldav-mcp/issues/194)) ([d5ba6b2](https://github.com/langmail/caldav-mcp/commit/d5ba6b27ef9895a549885f023ac707cf0703b456)), closes [#191](https://github.com/langmail/caldav-mcp/issues/191)
+
 ## [0.13.1](https://github.com/langmail/caldav-mcp/compare/v0.13.0...v0.13.1) (2026-11-26)
 
 ### Bug Fixes
