@@ -1,0 +1,23 @@
+name: Factory
+# Fails when a copy from langmail/factory (a skill in skills-lock.json,
+# .github/labels.yml or WORKFLOW.md) differs from its pinned commit or
+# AGENTS.md lacks a Factory section entry, and on main syncs the labels to
+# GitHub. The factory's sync PRs move these pins.
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  skills:
+    uses: langmail/factory/.github/workflows/skills-check.yml@b1b36dcbf1e05ddcc9fabd3a13f535c4f8b21c71 # v0.6.0
+  labels:
+    if: github.event_name == 'push'
+    uses: langmail/factory/.github/workflows/labels.yml@b1b36dcbf1e05ddcc9fabd3a13f535c4f8b21c71 # v0.6.0
+    # contents: write because GitHub drops issue type changes from a token
+    # without push access.
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read

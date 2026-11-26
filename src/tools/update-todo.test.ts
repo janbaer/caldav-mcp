@@ -11,6 +11,7 @@ type ToolHandler = (params: {
 	start?: string;
 	description?: string;
 	location?: string;
+	reminderAt?: string | null;
 	status?: "NEEDS-ACTION" | "COMPLETED" | "IN-PROCESS" | "CANCELLED";
 }) => Promise<{ content: { type: string; text: string }[] }>;
 
@@ -225,5 +226,81 @@ describe("registerUpdateTodo", () => {
 		const passed = mockClient.updateTodo.mock.calls[0]?.[1];
 		expect(passed.status).toBe("NEEDS-ACTION");
 		expect(passed.completed).toBeUndefined();
+	});
+
+	describe("reminderAt", () => {
+		const withAlarm: Todo = {
+			...existingTodo,
+			alarms: [
+				{
+					action: "DISPLAY",
+					description: "Original",
+					trigger: "2026-11-27T08:00:00Z",
+				},
+			],
+		};
+
+		function setupWith(existing: Todo) {
+			const mockClient = {
+				getTodosByHref: vi.fn().mockResolvedValue([existing]),
+				updateTodo: vi.fn().mockResolvedValue({ uid: "todo-123" }),
+			};
+			const { server, getHandler } = makeServer();
+			registerUpdateTodo(mockClient as unknown as CalDAVClient, server);
+			const handler = getHandler();
+			if (!handler) {
+				throw new Error("handler not registered");
+			}
+			return { handler, mockClient };
+		}
+
+		it("replaces existing alarms with one at the new time", async () => {
+			const { handler, mockClient } = setupWith(withAlarm);
+
+			await handler({
+				calendarUrl: "/f/tasks/",
+				reminderAt: "2026-11-27T10:00:00+01:00",
+				summary: "Renamed",
+				uid: "todo-123",
+			});
+
+			const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+			expect(passed.alarms).toHaveLength(1);
+			expect(passed.alarms[0].description).toBe("Renamed");
+			expect(typeof passed.alarms[0].trigger).not.toBe("string");
+			expect(String(passed.alarms[0].trigger)).toBe("2026-11-27T09:00:00Z");
+		});
+
+		it("removes all alarms for null and keeps the task", async () => {
+			const { handler, mockClient } = setupWith(withAlarm);
+
+			await handler({
+				calendarUrl: "/f/tasks/",
+				reminderAt: null,
+				uid: "todo-123",
+			});
+
+			const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+			expect(passed.alarms).toEqual([]);
+			expect(passed.summary).toBe("Original");
+		});
+
+		it("keeps an absolute alarm when another field changes", async () => {
+			const { handler, mockClient } = setupWith(withAlarm);
+
+			await handler({
+				calendarUrl: "/f/tasks/",
+				summary: "Renamed",
+				uid: "todo-123",
+			});
+
+			const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+			expect(passed.alarms).toHaveLength(1);
+			// Not the read-back string: ical.js only writes an ICAL.Time as
+			// TRIGGER;VALUE=DATE-TIME.
+			expect(typeof passed.alarms[0].trigger).not.toBe("string");
+			expect(String(passed.alarms[0].trigger)).toBe("2026-11-27T08:00:00Z");
+			expect(passed.alarms[0].description).toBe("Renamed");
+		});
 	});
 });

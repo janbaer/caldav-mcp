@@ -16,14 +16,19 @@ const MAILTO_PREFIX = /^mailto:/iu;
 const ADDRESS_MESSAGE =
 	"Expected a plain email address such as name@example.com (no mailto:, no display name)";
 
+// A `refine`, not `.regex()`: zod emits `.regex()` as a JSON Schema `pattern`,
+// which grammar-constrained clients such as llama.cpp may fail to compile
+// (issue #171). The field descriptions carry the format hint instead.
 export const emailAddressSchema = z
 	.string()
-	.regex(ADDRESS, { message: ADDRESS_MESSAGE });
+	.refine((value) => ADDRESS.test(value), { message: ADDRESS_MESSAGE });
 
 // update-event takes "" to remove the stored organizer.
 export const emailAddressOrEmptySchema = z
 	.string()
-	.regex(ADDRESS_OR_EMPTY, { message: ADDRESS_MESSAGE });
+	.refine((value) => ADDRESS_OR_EMPTY.test(value), {
+		message: ADDRESS_MESSAGE,
+	});
 
 export function toCalAddress(email: string): string {
 	return `mailto:${email}`;

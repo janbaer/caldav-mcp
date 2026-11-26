@@ -172,7 +172,7 @@ Parameters:
 
 - `calendarUrl`: string
 - `description`: string (optional)
-- `end`: string — End datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive).
+- `end`: string — End datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive).
 - `location`: string (optional)
 - `organizer`: string (optional) — Organizer email (no mailto:), written as ORGANIZER; a scheduling-capable server (e.g. Radicale with the email/iMIP hook) uses it to send invitations, updates and cancellations to the attendees.
 - `recurrenceRule`: object (optional)
@@ -182,8 +182,8 @@ Parameters:
   - `count`: number (optional)
   - `freq`: enum (`DAILY` | `WEEKLY` | `MONTHLY` | `YEARLY`) (optional)
   - `interval`: number (optional)
-  - `until`: string (optional)
-- `start`: string — Start datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD).
+  - `until`: string (optional) — Last occurrence at or before this datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
+- `start`: string — Start datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z). A whole-day event also accepts a plain date (YYYY-MM-DD).
 - `attendees`: array of string (optional) — Attendee emails (no mailto:), written as ATTENDEE lines; a scheduling-capable server mails them the invitation. Requires organizer.
 - `summary`: string
 - `wholeDay`: boolean (optional) — Create as a whole-day event
@@ -200,7 +200,7 @@ Parameters:
 
 - `calendarUrl`: string
 - `description`: string (optional)
-- `end`: string (optional) — End datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive).
+- `end`: string (optional) — End datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive).
 - `location`: string (optional)
 - `organizer`: string (optional) — Organizer email (no mailto:); pass to set or change ORGANIZER, or an empty string to remove it (only when the event has no attendees). Omit to leave it as stored.
 - `recurrenceRule`: object (optional)
@@ -210,8 +210,8 @@ Parameters:
   - `count`: number (optional)
   - `freq`: enum (`DAILY` | `WEEKLY` | `MONTHLY` | `YEARLY`) (optional)
   - `interval`: number (optional)
-  - `until`: string (optional)
-- `start`: string (optional) — Start datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD).
+  - `until`: string (optional) — Last occurrence at or before this datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
+- `start`: string (optional) — Start datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z). A whole-day event also accepts a plain date (YYYY-MM-DD).
 - `attendees`: array of string (optional) — The complete new attendee list (no mailto:): it replaces the stored one, so get the current attendees from list-events and include everyone who should stay. An empty list removes all attendees. Omit to leave them as stored. Requires an organizer.
 - `summary`: string (optional)
 - `uid`: string — Unique identifier of the event to update (obtained from list-events)
@@ -241,27 +241,28 @@ List tasks (VTODOs) in the calendar specified by its URL. By default returns onl
 Parameters:
 
 - `calendarUrl`: string
-- `due_after`: string (optional) — Only tasks with a due date at or after this (ISO 8601). Undated tasks are excluded when a due window is set.
-- `due_before`: string (optional) — Only tasks with a due date at or before this (ISO 8601). Undated tasks are excluded when a due window is set.
+- `due_after`: string (optional) — Only tasks with a due date at or after this; undated tasks are excluded when a due window is set (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
+- `due_before`: string (optional) — Only tasks with a due date at or before this; undated tasks are excluded when a due window is set (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
 - `limit`: number (optional) — Max tasks to return (default 50, max 500)
 - `offset`: number (optional) — Tasks to skip (default 0)
 - `status`: enum (`OPEN` | `ALL` | `NEEDS-ACTION` | `COMPLETED` | `IN-PROCESS` | `CANCELLED`) (optional) — Filter by status. `OPEN` (default) = NEEDS-ACTION + IN-PROCESS; `ALL` = everything; or an exact status (NEEDS-ACTION, COMPLETED, IN-PROCESS, CANCELLED).
 
 Returns:
 
-- An object `{ todos, total, limit, offset }` where `total` is the count before pagination. Each todo has `uid`, `summary`, `status`, and optionally `due`, `start`, `completed`, `description`, `location`.
+- An object `{ todos, total, limit, offset }` where `total` is the count before pagination. Each todo has `uid`, `summary`, `status`, `reminders` (when the task will notify, as ISO datetimes, or as the raw offset such as `-PT15M` for a relative reminder on a task without `start`; empty when it has none), and optionally `due`, `start`, `completed`, `description`, `location`.
 
 ### create-todo
 
-Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin.
+Creates a task (VTODO) in the calendar specified by its URL. Only `summary` is required; a task may have no dates. Use `due` for a deadline and `start` for when work should begin. Use `reminderAt` when the user wants to be reminded ("remind me tomorrow at 9"); a task without it gets no reminder.
 
 Parameters:
 
 - `calendarUrl`: string
 - `description`: string (optional)
-- `due`: string (optional) — Due datetime (ISO 8601)
+- `due`: string (optional) — Due datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
 - `location`: string (optional)
-- `start`: string (optional) — Start datetime (ISO 8601)
+- `reminderAt`: string (optional) — When the user's devices should notify about the task: a clock time, not an offset from the due date. For "an hour before it's due", pass the due time minus one hour (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
+- `start`: string (optional) — Start datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
 - `status`: enum (`NEEDS-ACTION` | `COMPLETED` | `IN-PROCESS` | `CANCELLED`) (optional) — Defaults to NEEDS-ACTION when omitted
 - `summary`: string
 
@@ -271,15 +272,16 @@ Returns:
 
 ### update-todo
 
-Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. To mark a task done, prefer the `complete-todo` tool.
+Updates an existing task (VTODO) in the calendar specified by its URL. Only provided fields are changed. `reminderAt` replaces the task's reminders with one at that time, `null` removes all of them, and omitting it keeps them. To mark a task done, prefer the `complete-todo` tool.
 
 Parameters:
 
 - `calendarUrl`: string
 - `description`: string (optional)
-- `due`: string (optional)
+- `due`: string (optional) — New due datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
 - `location`: string (optional)
-- `start`: string (optional)
+- `reminderAt`: string | null (optional) — When the user's devices should notify about the task: a clock time, not an offset from the due date. For "an hour before it's due", pass the due time minus one hour. Replaces all existing reminders; `null` removes them; omit to keep them (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
+- `start`: string (optional) — New start datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z)
 - `status`: enum (`NEEDS-ACTION` | `COMPLETED` | `IN-PROCESS` | `CANCELLED`) (optional)
 - `summary`: string (optional)
 - `uid`: string — Unique identifier of the todo to update (from list-todos)

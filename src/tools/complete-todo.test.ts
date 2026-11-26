@@ -75,4 +75,28 @@ describe("registerCompleteTodo", () => {
 		).rejects.toThrow("Todo not found: missing");
 		expect(mockClient.updateTodo).not.toHaveBeenCalled();
 	});
+
+	it("keeps an absolute reminder writable", async () => {
+		const mockClient = {
+			getTodosByHref: vi.fn().mockResolvedValue([
+				{
+					...existingTodo,
+					alarms: [{ action: "DISPLAY", trigger: "2026-11-27T08:00:00Z" }],
+				},
+			]),
+			updateTodo: vi.fn().mockResolvedValue({ uid: "todo-123" }),
+		};
+		const { server, getHandler } = makeServer();
+		registerCompleteTodo(mockClient as unknown as CalDAVClient, server);
+		const handler = getHandler();
+		if (!handler) {
+			throw new Error("handler not registered");
+		}
+
+		await handler({ calendarUrl: "/f/tasks/", uid: "todo-123" });
+
+		const passed = mockClient.updateTodo.mock.calls[0]?.[1];
+		expect(typeof passed.alarms[0].trigger).not.toBe("string");
+		expect(String(passed.alarms[0].trigger)).toBe("2026-11-27T08:00:00Z");
+	});
 });

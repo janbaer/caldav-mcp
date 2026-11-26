@@ -56,10 +56,10 @@ bunx ultracite init \
 - `--linter` — `oxlint` (recommended) | `biome` | `eslint`
 - `--editors` — `universal` (writes `.vscode/settings.json` for every VS Code-based editor) | `vscode` | `cursor` | `devin` | `codebuddy` | `antigravity` | `bob` | `kiro` | `trae` | `void` | `zed`
 - `--agents` — every choice writes the rules to `AGENTS.md`. `universal` writes only that; `claude`, `gemini`, `aider` and `replit` also add the import, settings or copy that agent needs to read them; IDs like `codex`, `copilot`, `cline`, `amp` and `cursor-cli` (40 agents supported) need nothing more
-- `--frameworks` — `react` | `next` | `solid` | `vue` | `svelte` | `qwik` | `remix` | `tanstack` | `angular` | `astro` | `nestjs` | `jest` | `vitest` | `cypress` | `storybook`
+- `--frameworks` — `react` | `next` | `solid` | `vue` | `svelte` | `qwik` | `remix` | `tanstack` | `angular` | `astro` | `nestjs` | `jest` | `vitest` | `cypress` | `storybook` | `playwright` | `react-native` | `drizzle`
 - `--integrations` — `husky` | `lefthook` | `lint-staged` | `pre-commit`
 - `--hooks` — Enable auto-fix hooks: `claude` | `codex` | `copilot` | `cursor` | `devin` | `codebuddy` | `deepagents` | `grok`
-- `--js-plugins` — Opt-in Oxlint JS plugins: `@shadcn/lint` | `anti-slop` | `eslint-plugin-github` | `eslint-plugin-jsdoc` | `eslint-plugin-sonarjs` | `eslint-plugin-tsdoc` | `oxlint-plugin-react-doctor`
+- `--js-plugins` — Opt-in Oxlint JS plugins: `@interfere/landmines` | `@shadcn/lint` | `anti-slop` | `eslint-plugin-github` | `eslint-plugin-jsdoc` | `eslint-plugin-sonarjs` | `eslint-plugin-tsdoc` | `oxlint-plugin-react-doctor`
 - `--type-aware` — Enable type-aware linting (ESLint and Biome: extend their `type-aware` preset; Oxlint: installs `oxlint-tsgolint` and sets `typeAware`), and turn on `strictNullChecks` in tsconfig files
 - `--install-skill` — Install the reusable Ultracite skill after setup
 - `--skip-install` — Skip dependency installation
@@ -85,13 +85,13 @@ export default [...core, ...react];
 import { defineConfig } from "oxlint";
 import core from "ultracite/oxlint/core";
 export default defineConfig({
-	env: core.env,
-	extends: [core],
-	ignorePatterns: core.ignorePatterns,
+  env: core.env,
+  extends: [core],
+  ignorePatterns: core.ignorePatterns,
 });
 ```
 
-Presets available per linter (`ultracite/<linter>/<preset>`): `core`, `react`, `next`, `solid`, `vue`, `svelte`, `qwik`, `remix`, `tanstack`, `angular`, `astro`, `nestjs`, `jest`, `vitest`, `cypress`, `storybook` (`cypress` and `storybook` only have rules on ESLint; on Oxlint and Biome they're empty). ESLint and Biome also have `type-aware`, the rules that need type information, and ESLint has a `<framework>/type-aware` add-on for `angular`, `jest`, `nestjs`, `qwik`, `tanstack` and `vitest`, extended after that framework's preset. Oxlint also has `js-plugins` (`eslint-plugin-github`, `eslint-plugin-sonarjs` and `oxlint-plugin-react-doctor` run through oxlint's JS plugin support, with `next/js-plugins` and `tanstack/js-plugins` adding framework-specific React Doctor rules), `anti-slop` and `shadcn`. These are opt-in: init only adds them when picked in its prompt or passed with `--js-plugins`. Oxlint and ESLint also have `gdp`, for codebases that use gdp-ts authorization proofs (`@gdp-ts/core` ships the plugin); init never adds it, so extend it by hand after `core`.
+Presets available per linter (`ultracite/<linter>/<preset>`): `core`, `react`, `next`, `solid`, `vue`, `svelte`, `qwik`, `remix`, `tanstack`, `angular`, `astro`, `nestjs`, `jest`, `vitest`, `cypress`, `storybook`, `playwright`, `react-native`, `drizzle` (`cypress` and `storybook` only have rules on ESLint, and `playwright`, `react-native` and `drizzle` only on ESLint and Biome; on the other linters they add no plugin rules). ESLint and Biome also have `type-aware`, the rules that need type information, and ESLint has a `<framework>/type-aware` add-on for `angular`, `jest`, `nestjs`, `qwik`, `tanstack` and `vitest`, extended after that framework's preset. Oxlint also has `js-plugins` (`eslint-plugin-github`, `eslint-plugin-sonarjs` and `oxlint-plugin-react-doctor` run through oxlint's JS plugin support, with `next/js-plugins` and `tanstack/js-plugins` adding framework-specific React Doctor rules), `anti-slop`, `shadcn` and `landmines` (`@interfere/landmines`: strict rules against agent shortcuts such as test doubles, fixed sleeps, retries and prose comments). These are opt-in: init only adds them when picked in its prompt or passed with `--js-plugins`. Oxlint and ESLint also have `gdp`, for codebases that use gdp-ts authorization proofs (`@gdp-ts/core` ships the plugin); init never adds it, so extend it by hand after `core`.
 
 ## Migrating an Existing Project
 
@@ -139,8 +139,8 @@ Formatting is handled by the project's configured linter/formatter. Respect the 
 
 Run `bunx ultracite doctor` to diagnose. It checks:
 
-1. Linter and formatter installation (Biome; or ESLint + Prettier + Stylelint; or Oxlint + oxfmt)
-2. Config validity (extends the ultracite presets correctly)
+1. Linter and formatter installation and versions (Biome; or ESLint + Prettier + Stylelint; or Oxlint + oxfmt), plus the versions of the lint plugins the config loads
+2. Config validity (extends the ultracite presets correctly), and on Oxlint that the root config sets `env` (`ultracite upgrade` adds it)
 3. Ultracite in package.json dependencies
 4. Conflicting tools when not using the ESLint backend (legacy `.eslintrc.*` files, `.prettierrc.*`/`prettier.config.*`)
 

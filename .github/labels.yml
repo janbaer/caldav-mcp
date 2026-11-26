@@ -1,0 +1,43 @@
+# The labels of the issue workflow, the same in every Langmail repo. Edit
+# them in langmail/factory: its sync copies this file to .github/labels.yml
+# in each repo, the factory check fails on a hand edit to that copy, and the
+# factory's labels workflow syncs the copy to GitHub on each push to main.
+#
+# A retired label is deleted once no issue or pull request carries it. One
+# with a `type` is first replaced on each issue by that issue type, unless
+# the issue already has a type.
+
+labels:
+  - name: needs-info
+    color: "d876e3"
+    description: The author has to answer the triage questions first
+  - name: needs-decision
+    color: "fbca04"
+    description: A decision that is hard to undo waits for a human
+  - name: ready-for-agent
+    color: "0e8a16"
+    description: Meets the Definition of Ready; the Agent Brief is on the issue
+  - name: ready-for-human
+    color: "1d76db"
+    description: Specified, but only a human can do it
+  - name: urgent
+    color: "b60205"
+    description: "Fast lane: incident, broken for users, data loss or security"
+
+retired:
+  - name: bug
+    type: Bug
+  - name: enhancement
+    type: Feature
+  - name: documentation
+    type: Task
+  - name: question
+  - name: duplicate
+  - name: invalid
+  - name: wontfix
+  - name: good first issue
+  - name: help wanted
+  - name: "status: in-progress"
+  - name: "priority: high"
+  - name: "priority: medium"
+  - name: "priority: low"

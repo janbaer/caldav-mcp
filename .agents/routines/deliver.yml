@@ -1,0 +1,22 @@
+# This routine's parameters as set in claude.ai. claude.ai is
+# authoritative; update this file when you change the routine there.
+# See .agents/skills/scheduled-agent-design/SKILL.md.
+id: trig_01WurR4tnderrGieyBHdPvkF
+name: "langmail/caldav-mcp: Deliver next ready issue"
+prompt: Read WORKFLOW.md, then .agents/skills/deliver/SKILL.md, and follow them.
+repository: langmail/caldav-mcp
+# A public repository: its own repository is the only source, and the
+# routine has no connectors and an environment without production secrets.
+sources: [langmail/caldav-mcp]
+environment: env_011CUywMk4cTnnMdaiQdaM31
+model: claude-opus-5-5
+schedule: "CRON_TZ=Europe/Berlin 0 8 * * *"
+triggers:
+  - schedule
+  - "github: issues.labeled (label ready-for-agent, webhook trigger cc7c8584-6797-4883-abd6-f4791b68121a)"
+  - "github: issues.closed (webhook trigger 2847f1c1-cf6f-4000-a402-413dbb658837)"
+tools: [Bash, Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent, Skill]
+connectors: []
+# Off in a public repository: anyone can comment on the routine's PRs.
+autofix_on_pr_create: false
+notifications: {push: true, email: false, slack: false}

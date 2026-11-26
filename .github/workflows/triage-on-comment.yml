@@ -1,0 +1,21 @@
+name: Triage on Comment
+
+# Re-triages an unassigned issue after a maintainer's comment, in
+# langmail/factory's triage-on-comment.yml, whose sync PRs move the pin.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  triage:
+    uses: langmail/factory/.github/workflows/triage-on-comment.yml@b1b36dcbf1e05ddcc9fabd3a13f535c4f8b21c71 # v0.6.0
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+      id-token: write
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

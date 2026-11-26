@@ -103,15 +103,18 @@ const eventDateSchema = z
 	.refine(
 		(value) =>
 			isoDateTime.safeParse(value).success || isoDate.safeParse(value).success,
-		{ message: "Expected an ISO 8601 datetime or a plain date (YYYY-MM-DD)" }
+		{
+			message:
+				"Invalid datetime, expected ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00, or a plain date (YYYY-MM-DD) for a whole-day event",
+		}
 	);
 
 export const eventStartSchema = eventDateSchema.describe(
-	"Start datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD)."
+	"Start datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z). A whole-day event also accepts a plain date (YYYY-MM-DD)."
 );
 
 export const eventEndSchema = eventDateSchema.describe(
-	"End datetime (ISO 8601). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive)."
+	"End datetime (ISO 8601 with an offset, e.g. 2026-05-01T09:00:00+02:00 or 2026-05-01T07:00:00Z). A whole-day event also accepts a plain date (YYYY-MM-DD), which is the last day the event covers (inclusive)."
 );
 
 /**

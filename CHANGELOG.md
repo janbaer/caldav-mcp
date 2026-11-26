@@ -1,3 +1,21 @@
+## [0.13.2](https://github.com/langmail/caldav-mcp/compare/v0.13.1...v0.13.2) (2026-11-26)
+
+### Bug Fixes
+
+* **update-event:** keep alarms with an absolute trigger time ([#194](https://github.com/langmail/caldav-mcp/issues/194)) ([d5ba6b2](https://github.com/langmail/caldav-mcp/commit/d5ba6b27ef9895a549885f023ac707cf0703b456)), closes [#191](https://github.com/langmail/caldav-mcp/issues/191)
+
+## [0.13.1](https://github.com/langmail/caldav-mcp/compare/v0.13.0...v0.13.1) (2026-11-26)
+
+### Bug Fixes
+
+* drop regex patterns from tool input schemas ([#193](https://github.com/langmail/caldav-mcp/issues/193)) ([9412108](https://github.com/langmail/caldav-mcp/commit/9412108e5d7229e08d1688a8c6569eecc4fe2411)), closes [#171](https://github.com/langmail/caldav-mcp/issues/171)
+
+# [0.13.0](https://github.com/langmail/caldav-mcp/compare/v0.12.1...v0.13.0) (2026-11-26)
+
+### Features
+
+* set, move and clear reminders on tasks ([#195](https://github.com/langmail/caldav-mcp/issues/195)) ([497ed59](https://github.com/langmail/caldav-mcp/commit/497ed59785ea3c8cb647114e7c4a56928d12a958)), closes [#192](https://github.com/langmail/caldav-mcp/issues/192) [#170](https://github.com/langmail/caldav-mcp/issues/170)
+
 ## [0.12.1](https://github.com/langmail/caldav-mcp/compare/v0.12.0...v0.12.1) (2026-11-23)
 
 ### Bug Fixes
