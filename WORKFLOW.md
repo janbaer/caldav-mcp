@@ -292,3 +292,7 @@ apply says so in a few words.
 - **Verify:** what to run for a change, and which logs to check.
 - **Ship:** what a PR adds besides the code, such as docs or screenshots.
 - **Release:** how a merged change goes live, and what a human still does.
+- **Dependencies:** the commands that list outdated packages, where the
+  stack is listed, what else an upgrade covers (runtimes, toolchains,
+  images, pins) with the files each is pinned in, and what it leaves out
+  (`upgrade-dependency` skill).

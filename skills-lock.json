@@ -3,88 +3,96 @@
   "skills": {
     "decide": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/decide/SKILL.md",
       "computedHash": "948704d8855fd40c231646e81b7a9a072ed0165b8c92bb5beb5e7337dd9e560a"
     },
     "deliver": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/deliver/SKILL.md",
       "computedHash": "1a80b988b8c5c37c36824a008b9df9f888d13b9e044c312423fb2ccdb6638c64"
     },
     "grill-me": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/grill-me/SKILL.md",
       "computedHash": "7b8272212181514e50c371cbd2fa97da8b4280450cbe4e54c70b580595b7b77e"
     },
     "grilling": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/grilling/SKILL.md",
       "computedHash": "fac97e7604fabc21eb4d791432a1af533561eedd41781d3fb20f5a2d4f03e2cd"
     },
     "handover-prompt": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/handover-prompt/SKILL.md",
       "computedHash": "86bd42151eec3c0c3d885e1e964ee2532b897e54ea319c0a63320d7f367a9bf2"
     },
+    "improve-context": {
+      "source": "langmail/factory",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "sourceType": "github",
+      "skillPath": "skills/improve-context/SKILL.md",
+      "computedHash": "5f6f87c728e8f98f0bdce2775205b15ee7b556ac43a8a2fb48d8512cde0d8825"
+    },
     "mcp-tool-design": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/mcp-tool-design/SKILL.md",
       "computedHash": "6001627a4b01bf693a26fb70bc13d72ec0d5a6ec2f93721017d4f5a53b858fbf"
     },
     "resolve-conflicts": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/resolve-conflicts/SKILL.md",
       "computedHash": "a0a42e5a585b7071bb506ba2adb7d2e7bfd745edf075b5d7cc69bfe1964cadfa"
     },
     "review-agents-md": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/review-agents-md/SKILL.md",
       "computedHash": "83c2414a6b400a95c3041b0df1f771bc4415acd96c1dfaf9278c8c8cda2107f4"
     },
     "scheduled-agent-design": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/scheduled-agent-design/SKILL.md",
       "computedHash": "67a31fac144d3c076792f818e126303165195775c94b3567a5825e2b6af240a4"
     },
     "scion-like-git": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/scion-like-git/SKILL.md",
       "computedHash": "9990bdfb32060daf8393239bfa364aa550d15af0c0391947a31961935f28b087"
     },
     "triage": {
       "source": "langmail/factory",
-      "ref": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
-      "commit": "9bf055020fc63aca401666c065a0c7537f0c6b1b",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
       "sourceType": "github",
       "skillPath": "skills/triage/SKILL.md",
       "computedHash": "fab02df5859effb9d1ef1832e0a7d1fef1a9dcb63e1ab7c6c412dfcb8e704501"
@@ -96,6 +104,14 @@
       "sourceType": "github",
       "skillPath": "skills/ultracite/SKILL.md",
       "computedHash": "52eac7a3ac5f3117d8d70f1058eed56403e9755fc93e0ba944c4c501fa560ba6"
+    },
+    "upgrade-dependency": {
+      "source": "langmail/factory",
+      "ref": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "commit": "e055871ce76db8aee6b7c3ac9030c91a90a51602",
+      "sourceType": "github",
+      "skillPath": "skills/upgrade-dependency/SKILL.md",
+      "computedHash": "8f29c2decc8c09b392bd8a03211398a901b6643907597ca3a144b05ed31b5a1d"
     }
   }
 }
