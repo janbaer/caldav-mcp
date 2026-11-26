@@ -14,6 +14,7 @@ schedule: "CRON_TZ=Europe/Berlin 0 8 * * *"
 triggers:
   - schedule
   - "github: issues.labeled (label ready-for-agent, webhook trigger cc7c8584-6797-4883-abd6-f4791b68121a)"
+  - "github: issues.closed (webhook trigger 2847f1c1-cf6f-4000-a402-413dbb658837)"
 tools: [Bash, Read, Write, Edit, Glob, Grep, WebFetch, WebSearch, Agent, Skill]
 connectors: []
 # Off in a public repository: anyone can comment on the routine's PRs.
